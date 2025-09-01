@@ -125,10 +125,12 @@ class OrderViewModel(private val foodId: String) : ViewModel() {
     val quantity: StateFlow<Int> = _quantity
 
     fun toggleSauce(sauce: Option, checked: Boolean) {
+        if (!sauce.availability) return
         _selectedSauces.value = if (checked) _selectedSauces.value + sauce else _selectedSauces.value - sauce
     }
 
     fun toggleAddOn(addOn: Option, checked: Boolean) {
+        if (!addOn.availability) return
         _selectedAddOns.value = if (checked) _selectedAddOns.value + addOn else _selectedAddOns.value - addOn
     }
 

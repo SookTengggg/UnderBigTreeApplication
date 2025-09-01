@@ -194,7 +194,7 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
             }
             if (cartItems.isNotEmpty()) {
                 FloatingActionButton(
-                    onClick = { /*TODO*/ },
+                    onClick = {navController.navigate("orderSummaryScreen") },
                     modifier = Modifier
                         .align(alignment = Alignment.BottomEnd)
                         .padding(bottom = 110.dp, end = 5.dp)
