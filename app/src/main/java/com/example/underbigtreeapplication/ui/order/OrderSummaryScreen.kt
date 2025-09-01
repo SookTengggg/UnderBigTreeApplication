@@ -1,6 +1,7 @@
 package com.example.underbigtreeapplication.ui.order
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
@@ -40,6 +42,7 @@ import coil.compose.AsyncImage
 import com.example.underbigtreeapplication.utils.formatAmount
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
 import com.example.underbigtreeapplication.viewModel.OrderViewModel
+import kotlin.toString
 
 @Composable
 fun OrderSummaryScreen(
@@ -55,7 +58,16 @@ fun OrderSummaryScreen(
         viewModel.fetchOrders()
     }
 
-    val subtotal = orders.sumOf { it.totalPrice }
+    val groupedOrders = orders.groupBy { it.food.id to it.takeAway }
+        .map { (_, group) ->
+            val first = group.first()
+            first.copy(
+                quantity = group.sumOf { it.quantity },
+                totalPrice = group.sumOf { it.totalPrice }
+            )
+        }
+
+    val subtotal = groupedOrders.sumOf { it.totalPrice }
 
     Column(
         modifier = Modifier
@@ -82,14 +94,17 @@ fun OrderSummaryScreen(
         Text("Order Summary", fontSize = 28.sp)
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (orders.isEmpty()) {
+        if (groupedOrders.isEmpty()) {
             Text("No orders yet", fontSize = 16.sp)
         } else {
-            orders.forEach { order ->
+            groupedOrders.forEach { order ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = 8.dp)
+                        .clickable {
+                            navController.navigate("updateOrder")
+                        },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     AsyncImage(
@@ -97,23 +112,46 @@ fun OrderSummaryScreen(
                         contentDescription = order.food.name,
                         modifier = Modifier.size(80.dp)
                     )
-
                     Spacer(modifier = Modifier.width(12.dp))
 
                     Column(
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(order.food.name, fontSize = 16.sp)
+                        Row(modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(order.food.name, fontSize = 14.sp)
+                            Text("${formatAmount(order.totalPrice)}", fontSize = 14.sp)
+                        }
                         if (order.takeAway == true) {
                             Text("(Take Away)", fontSize = 12.sp, color = Color.Gray)
                         }
-                    }
 
-                    Column(
-                        horizontalAlignment = Alignment.End
-                    ) {
-                        Text("${formatAmount(order.totalPrice)}", fontSize = 14.sp)
-                        Text("Qty: ${order.quantity}", fontSize = 12.sp, color = Color.Gray)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+
+                            IconButton(onClick = { viewModel.decreaseQuantity(order) }) {
+                                Text("-", fontSize = 12.sp, color = Color.Gray)
+                            }
+
+                            Text("Qty: ${order.quantity}", fontSize = 12.sp, color = Color.Gray)
+
+                            IconButton(onClick = { viewModel.increaseQuantity(order) }) {
+                                Text("+", fontSize = 12.sp, color = Color.Gray)
+                            }
+
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            IconButton(onClick = { viewModel.removeItem(order) }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Remove item",
+                                    tint = Color.Red
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -7,8 +7,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.underbigtreeapplication.data.local.AppDatabase
 import com.example.underbigtreeapplication.model.MenuEntity
 import com.example.underbigtreeapplication.repository.MenuRepository
@@ -16,6 +18,7 @@ import com.example.underbigtreeapplication.ui.customerHomePage.CustHomeScreen
 import com.example.underbigtreeapplication.ui.loginPage.LoginScreen
 import com.example.underbigtreeapplication.ui.order.OrderScreen
 import com.example.underbigtreeapplication.ui.order.OrderSummaryScreen
+import com.example.underbigtreeapplication.ui.order.UpdateOrderScreen
 import com.example.underbigtreeapplication.ui.payment.BankPaymentScreen
 import com.example.underbigtreeapplication.ui.payment.BankPaymentSuccess
 import com.example.underbigtreeapplication.ui.payment.TngPaymentScreen
@@ -146,7 +149,6 @@ fun NavigationFlow(navController: NavHostController) {
                 onPlaceOrder = { cartItem ->
                     cartViewModel.addToCart(cartItem)
                     navController.popBackStack()
-                    //navController.navigate("orderSummaryScreen")
                 }
             )
         }
@@ -158,6 +160,10 @@ fun NavigationFlow(navController: NavHostController) {
                 navController,
                 onBackClick = { navController.popBackStack() },
             )
+        }
+
+        composable("updateOrder") {
+            UpdateOrderScreen()
         }
 
         composable("tngPayment/{totalAmount}") { backStackEntry ->
