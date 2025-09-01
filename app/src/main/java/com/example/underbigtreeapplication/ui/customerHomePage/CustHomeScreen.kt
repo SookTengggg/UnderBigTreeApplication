@@ -2,22 +2,29 @@ package com.example.underbigtreeapplication.ui.customerHomePage
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -35,22 +42,40 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlin.collections.forEach
 import coil.compose.AsyncImage
 import com.example.underbigtreeapplication.model.CategoryEntity
 import com.example.underbigtreeapplication.model.MenuEntity
 import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModel
+import kotlin.text.category
 
+data class NavItem(
+    val icon: ImageVector,
+    val label: String,
+    val route: String
+)
+
+val navItems = listOf(
+    NavItem(Icons.Filled.Home, "Home", "home"),
+    NavItem(Icons.Filled.Menu, "Activity","activityScreen"),
+    NavItem(Icons.Filled.Person, "Profile", "profile")
+)
 
 @Composable
 fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHomeViewModel, navController: NavController, cartViewModel: CartViewModel) {
@@ -58,66 +83,142 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
     val categories by viewModel.categories.collectAsStateWithLifecycle(initialValue = emptyList())
     val selectedCategory by viewModel.selectedCategory
     val cartItems by cartViewModel.cartItems.collectAsState()
+    var selectedItem by remember { mutableStateOf("home") }
     val desiredOrder = listOf("All", "Rice", "Spaghetti", "Chicken", "Fish", "Drinks")
-
     val allCategory = categories.find { it.name == "All" } ?: CategoryEntity("all", "All", "")
     val sortedCategories = listOf(allCategory) + categories.filter { it.name != "All" }.sortedBy { desiredOrder.indexOf(it.name).takeIf { it >= 0 } ?: Int.MAX_VALUE }
 
-    Box(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxSize()) {
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp
+    val isTablet = screenWidthDp >= 600
 
-            SideNavigation(
-                categories = sortedCategories,
-                selected = selectedCategory,
-                onCategorySelected = { viewModel.selectCategory(it) }
-            )
+    Box(Modifier.fillMaxSize().statusBarsPadding()) {
+        if (isTablet) {
+            Row(Modifier.fillMaxSize()) {
+                SideNavigationBar(
+                    items = navItems,
+                    selected = selectedItem,
+                    onItemSelected = { newSelection -> selectedItem = newSelection })
 
-            Column(Modifier.fillMaxSize()) {
-                Points(points = points, onClick = {/* TODO */ })
-
-                val filteredItems = if (selectedCategory == "All") {
-                    menus
-                } else {
-                    menus.filter { it.category.contains(selectedCategory) }
-                }
-
-                LazyColumn(
-                    Modifier
-                        .weight(1f)
-                        .padding(horizontal = 8.dp)
-                        .padding(bottom = 85.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp)
                 ) {
-                    items(filteredItems) { item ->
-                        MenuCard(item = item, onClick = {
-                            navController.navigate("order/${it.id}")
-                        })
+                    Row(
+                        Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Points(points = points, onClick = {/*TODO*/ })
+                    }
+
+                    TopCategory(
+                        categories = sortedCategories,
+                        selected = selectedCategory,
+                        onCategorySelected = { viewModel.selectCategory(it) })
+
+                    val filteredItems = if (selectedCategory == "All") {
+                        menus
+                    } else {
+                        menus.filter { it.category.contains(selectedCategory) }
+                    }
+
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(top = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(filteredItems) { item ->
+                            MenuCard(item, onClick = {
+                                navController.navigate("order/${it.id}")
+                            })
+                        }
                     }
                 }
             }
-        }
-        if(cartItems.isNotEmpty()) {
-            FloatingActionButton(
-                onClick = { /*TODO*/ },
-                modifier = Modifier
-                    .align(alignment = Alignment.BottomEnd)
-                    .padding(bottom = 110.dp, end = 5.dp)
-                    .fillMaxWidth(0.95f),
-                containerColor = Color.Black,
-                contentColor = Color.White
-            ) {
-                Row (
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+            if (cartItems.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = { /*TODO*/ },
+                    modifier = Modifier
+                        .align(alignment = Alignment.BottomEnd)
+                        .padding(24.dp)
+                        .fillMaxWidth(0.95f),
+                    containerColor = Color.Black,
+                    contentColor = Color.White
                 ) {
-                    Text("Cart · ${cartViewModel.getTotalQuantity()} item(s)")
-                    Text("RM %.2f".format(cartViewModel.getTotalPrice()))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Cart · ${cartViewModel.getTotalQuantity()} item(s)")
+                        Text("RM %.2f".format(cartViewModel.getTotalPrice()))
+                    }
                 }
             }
-        }
+        } else {
+            Row(Modifier.fillMaxSize()) {
 
-        BottomNavigation(modifier = Modifier.align(Alignment.BottomCenter))
+                SideNavigation(
+                    categories = sortedCategories,
+                    selected = selectedCategory,
+                    onCategorySelected = { viewModel.selectCategory(it) }
+                )
+
+                Column(Modifier.fillMaxSize()) {
+                    Points(points = points, onClick = {/* TODO */ })
+
+                    val filteredItems = if (selectedCategory == "All") {
+                        menus
+                    } else {
+                        menus.filter { it.category.contains(selectedCategory) }
+                    }
+
+                    LazyColumn(
+                        Modifier
+                            .weight(1f)
+                            .padding(horizontal = 8.dp)
+                            .padding(bottom = 85.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(filteredItems) { item ->
+                            MenuCard(item = item, onClick = {
+                                navController.navigate("order/${it.id}")
+                            })
+                        }
+                    }
+                }
+            }
+            if (cartItems.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = { /*TODO*/ },
+                    modifier = Modifier
+                        .align(alignment = Alignment.BottomEnd)
+                        .padding(bottom = 110.dp, end = 5.dp)
+                        .fillMaxWidth(0.95f),
+                    containerColor = Color.Black,
+                    contentColor = Color.White
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Cart · ${cartViewModel.getTotalQuantity()} item(s)")
+                        Text("RM %.2f".format(cartViewModel.getTotalPrice()))
+                    }
+                }
+            }
+
+            BottomNavigation(
+                items = navItems,
+                navController = navController,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
     }
 }
 
@@ -155,6 +256,51 @@ fun SideNavigation(categories: List<CategoryEntity>, selected: String, onCategor
                             model = category.imageRes,
                             contentDescription = category.name,
                             Modifier.size(40.dp),
+                        )
+                        Text(
+                            text = category.name,
+                            fontSize = 12.sp,
+                            color = Color.Black
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TopCategory(categories: List<CategoryEntity>, selected: String, onCategorySelected: (String) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFEFEFEF))
+            .padding(16.dp)
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        categories.forEach { category ->
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .clickable { onCategorySelected(category.name) }
+            ) {
+                Box (
+                    modifier = Modifier
+                        .background(
+                            color = if (category.name == selected) Color.White else Color.Transparent,
+                            shape = RoundedCornerShape(50)
+                        )
+                        .padding(60.dp, 8.dp),
+                    //.size(100.dp),
+                    contentAlignment = Alignment.Center
+                ){
+                    Row (verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AsyncImage(
+                            model = category.imageRes,
+                            contentDescription = category.name,
+                            Modifier.size(30.dp),
                         )
                         Text(
                             text = category.name,
@@ -240,41 +386,71 @@ fun MenuCard(item: MenuEntity, onClick: (MenuEntity) -> Unit){
 }
 
 @Composable
-fun BottomNavigation(modifier: Modifier = Modifier) {
+fun BottomNavigation(items: List<NavItem>, navController: NavController, modifier: Modifier = Modifier) {
+    val currentDestination = navController.currentBackStackEntryAsState().value?.destination?.route
+
     NavigationBar (
         modifier = modifier.fillMaxWidth(),
         containerColor = Color(0xFFEFEFEF),
         contentColor = Color.Black
     ) {
-        NavigationBarItem(
-            selected = true,
-            onClick = {/* TODO */},
-            icon = {
+        items.forEach { item ->
+            val selected = currentDestination == item.route
+
+            NavigationBarItem(
+                selected = selected,
+                onClick = {
+                    if (currentDestination != item.route) {
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.startDestinationId) {saveState = true}
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
+                icon = {
+                    Icon(
+                        item.icon,
+                        contentDescription = item.label,
+                    )
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun SideNavigationBar(items: List<NavItem>, selected: String, onItemSelected: (String) -> Unit, modifier: Modifier = Modifier) {
+    Column (modifier = Modifier
+        .fillMaxHeight()
+        .width(200.dp)
+        .background(Color(0xFFEFEFEF)),
+        verticalArrangement = Arrangement.Top
+    ) {
+        items.forEach { item ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onItemSelected(item.route) }
+                    .background(
+                        if (selected == item.route) Color.White else Color.Transparent
+                    )
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+
+                ) {
                 Icon(
-                    imageVector = Icons.Filled.Home,
-                    contentDescription = "Home",
+                    item.icon,
+                    contentDescription = item.label
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = item.label,
+                    fontSize = 12.sp,
+                    fontWeight = if (selected == item.route) FontWeight.Bold else FontWeight.Normal,
+                    color = Color.Black
                 )
             }
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {/* TODO */},
-            icon = {
-                Icon(
-                    imageVector = Icons.Filled.Menu,
-                    contentDescription = "Menu"
-                )
-            }
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {/* TODO */},
-            icon = {
-                Icon(
-                    imageVector = Icons.Filled.Person,
-                    contentDescription = "Profile"
-                )
-            }
-        )
+        }
     }
 }

@@ -30,6 +30,7 @@ import com.google.firebase.auth.FirebaseAuth
 fun NavigationFlow(navController: NavHostController) {
     val isLoggedIn = FirebaseAuth.getInstance().currentUser != null
     val startDestination = if (isLoggedIn) "welcome" else "login"
+    val cartViewModel: CartViewModel = viewModel()
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable("login") {
@@ -77,7 +78,6 @@ fun NavigationFlow(navController: NavHostController) {
             val context = LocalContext.current
             val database = AppDatabase.getDatabase(context)
             val repository = remember { MenuRepository(database) }
-            val cartViewModel: CartViewModel = viewModel()
             val viewModel: CustHomeViewModel = viewModel(factory = CustHomeViewModelFactory(repository))
 
             CustHomeScreen(
@@ -95,7 +95,9 @@ fun NavigationFlow(navController: NavHostController) {
                 foodId = foodId,
                 onBackClick = { navController.popBackStack() },
                 onPlaceOrder = { cartItem ->
-                    navController.navigate("orderSummaryScreen")
+                    cartViewModel.addToCart(cartItem)
+                    navController.popBackStack()
+                    //navController.navigate("orderSummaryScreen")
                 }
             )
         }
