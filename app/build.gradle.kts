@@ -2,14 +2,16 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
+    kotlin("kapt")
 }
 
 android {
-    namespace = "com.example.underbigtreeapplication"
+    namespace = "com.example.underbigtreeapp"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.underbigtreeapplication"
+        applicationId = "com.example.underbigtreeapp"
         minSdk = 31
         targetSdk = 36
         versionCode = 1
@@ -49,6 +51,23 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.compose)
+    implementation("com.google.code.gson:gson:2.13.1")
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation ("androidx.room:room-runtime:2.6.1")
+    implementation ("androidx.room:room-ktx:2.6.1")
+    implementation(libs.androidx.media3.common.ktx)
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation(libs.ads.mobile.sdk)
+    implementation(libs.androidx.runtime.livedata)
+    kapt("androidx.room:room-compiler:2.6.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "339004182073",
+    "project_id": "underbigtreeapp",
+    "storage_bucket": "underbigtreeapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:339004182073:android:44a798fc8f5a654e31c7e8",
+        "android_client_info": {
+          "package_name": "com.example.underbigtreeapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmJS8fX3T7W4EIQYtK8ZuqZWGG388yFd4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:339004182073:android:e7c9a0c980811f4e31c7e8",
+        "android_client_info": {
+          "package_name": "com.example.underbigtreeapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmJS8fX3T7W4EIQYtK8ZuqZWGG388yFd4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
