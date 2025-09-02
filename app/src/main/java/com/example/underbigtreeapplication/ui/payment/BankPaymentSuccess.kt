@@ -18,12 +18,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.utils.formatAmount
-import com.example.underbigtreeapplication.viewModel.PaymentViewModel
+import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
 
 @Composable
 fun BankPaymentSuccess(
     totalAmount: Double,
-    viewModel: PaymentViewModel = viewModel(),
+    viewModel: OrderSummaryViewModel = viewModel(),
     onDoneClick: () -> Unit = {}
 ) {
     val transactionDate = viewModel.getTransactionDate()

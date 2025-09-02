@@ -194,11 +194,12 @@ fun OrderSummaryScreen(
             }
             Spacer(modifier = Modifier.height(24.dp))
 
+            val firstOrderId = groupedOrders.firstOrNull()?.orderId ?: "NO_ORDER"
             Button(
                 onClick = {
                     if (selectedPayment == "tng") {
                         navController.navigate("tngPayment/${subtotal}")
-                    } else if (selectedPayment == "bank") {
+                    } else {
                         navController.navigate("bankPayment/${subtotal}")
                     }
                 },
@@ -206,7 +207,6 @@ fun OrderSummaryScreen(
             ) {
                 Text("Pay")
             }
-
         }
 
         Spacer(modifier = Modifier.height(50.dp))

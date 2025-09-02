@@ -33,12 +33,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.utils.formatAmount
-import com.example.underbigtreeapplication.viewModel.PaymentViewModel
+import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
 
 @Composable
 fun TngPaymentScreen(
     totalAmount: Double,
-    viewModel: PaymentViewModel = viewModel(),
+    viewModel: OrderSummaryViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onPayClick: (String) -> Unit = {}
 ) {

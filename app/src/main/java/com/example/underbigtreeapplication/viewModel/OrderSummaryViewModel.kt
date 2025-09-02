@@ -2,9 +2,14 @@ package com.example.underbigtreeapplication.viewModel
 
 import androidx.lifecycle.ViewModel
 import com.example.underbigtreeapplication.model.CartItem
+import com.example.underbigtreeapplication.model.Payment
+import com.example.underbigtreeapplication.utils.maskPhoneNumber
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlin.compareTo
 import kotlin.times
 
@@ -93,5 +98,17 @@ class OrderSummaryViewModel : ViewModel() {
                 .delete()
         }
     }
+
+    private val phoneNumber = "+60123456780" //from profile
+
+    fun getMaskedPhone(): String = maskPhoneNumber(phoneNumber)
+
+    fun getTransactionDate(): String {
+        val current = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.getDefault())
+        return current.format(formatter)
+    }
+
+
 }
 
