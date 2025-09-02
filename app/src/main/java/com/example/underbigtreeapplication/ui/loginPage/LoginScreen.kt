@@ -1,5 +1,6 @@
 package com.example.underbigtreeapplication.ui.loginPage
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,9 +24,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
+    onStaffLogin: () -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
     val context = LocalContext.current
+    val sharedPref = context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -68,10 +71,18 @@ fun LoginScreen(
                         val result = FirebaseService.loginUser(email, password)
                         isLoading = false
                         result.onSuccess {
-                            Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
-                            onLoginSuccess()
+                            if (email == "underbigtree@gmail.com" && password == "ubtree_123") {
+                                sharedPref.edit().putBoolean("isLoggedIn", true).putString("userType", "staff").apply()
+                                Toast.makeText(context, "Staff login successful!", Toast.LENGTH_SHORT).show()
+                                onStaffLogin()
+                            } else {
+                                sharedPref.edit().putBoolean("isLoggedIn", true).putString("userType", "customer").apply()
+                                Toast.makeText(context, "Customer login successful!", Toast.LENGTH_SHORT).show()
+                                onLoginSuccess()
+                            }
                         }.onFailure {
                             errorMessage = it.message ?: "Login failed"
+
                         }
                     }
                 },
@@ -100,6 +111,7 @@ fun LoginScreen(
 fun PreviewLoginScreen() {
     LoginScreen(
         onLoginSuccess = {},
+        onStaffLogin = {},
         onNavigateToRegister = {}
     )
 }
