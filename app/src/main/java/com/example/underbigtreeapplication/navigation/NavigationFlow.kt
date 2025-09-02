@@ -16,11 +16,11 @@ import com.example.underbigtreeapplication.ui.customerHomePage.CustHomeScreen
 import com.example.underbigtreeapplication.ui.loginPage.LoginScreen
 import com.example.underbigtreeapplication.ui.order.OrderScreen
 import com.example.underbigtreeapplication.ui.order.OrderSummaryScreen
-import com.example.underbigtreeapplication.ui.order.UpdateOrderScreen
 import com.example.underbigtreeapplication.ui.payment.BankPaymentScreen
 import com.example.underbigtreeapplication.ui.payment.BankPaymentSuccess
 import com.example.underbigtreeapplication.ui.payment.TngPaymentScreen
 import com.example.underbigtreeapplication.ui.payment.TngPaymentSuccess
+import com.example.underbigtreeapplication.ui.pointPage.RewardsScreen
 import com.example.underbigtreeapplication.ui.signupPage.SignupScreen
 import com.example.underbigtreeapplication.ui.welcomePage.WelcomeScreen
 import com.example.underbigtreeapplication.viewModel.CartViewModel
@@ -92,6 +92,13 @@ fun NavigationFlow(navController: NavHostController) {
             )
         }
 
+        composable("point") {
+            RewardsScreen(
+                onBackClick = { navController.popBackStack() },
+                onRedeemClick={}
+            )
+        }
+
         composable("order/{foodId}") {backStackEntry ->
             val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
             OrderScreen(
@@ -111,10 +118,6 @@ fun NavigationFlow(navController: NavHostController) {
                 navController,
                 onBackClick = { navController.popBackStack() },
             )
-        }
-
-        composable("updateOrder") {
-            UpdateOrderScreen()
         }
 
         composable("tngPayment/{totalAmount}") { backStackEntry ->

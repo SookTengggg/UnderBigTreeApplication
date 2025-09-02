@@ -23,39 +23,75 @@ class OrderSummaryViewModel : ViewModel() {
     }
 
     fun increaseQuantity(item: CartItem) {
-        val updatedList = _orders.value.toMutableList().map {
-            if (it.food.id == item.food.id && it.takeAway == item.takeAway) {
-                it.copy(
-                    quantity = it.quantity + 1,
-                    totalPrice = (it.food.price * (it.quantity + 1))
+        val updatedList = _orders.value.orEmpty().map {
+            if (it.orderId == item.orderId) {
+                val newQuantity = it.quantity + 1
+                val updatedItem = it.copy(
+                    quantity = newQuantity,
+                    totalPrice = it.food.price * newQuantity
                 )
+
+                FirebaseFirestore.getInstance()
+                    .collection("Orders")
+                    .document(it.orderId)
+                    .update(
+                        mapOf(
+                            "quantity" to updatedItem.quantity,
+                            "totalPrice" to updatedItem.totalPrice
+                        )
+                    )
+                updatedItem
             } else it
         }
+
         _orders.value = updatedList
     }
 
+
     fun decreaseQuantity(item: CartItem) {
-        val updatedList = _orders.value.toMutableList().mapNotNull {
-            if (it.food.id == item.food.id && it.takeAway == item.takeAway) {
-                if (it.quantity > 1) {
-                    it.copy(
-                        quantity = it.quantity - 1,
-                        totalPrice = (it.food.price * (it.quantity - 1))
+        val updatedList = _orders.value.orEmpty().mapNotNull {
+            if (it.orderId == item.orderId) {
+                val newQuantity = it.quantity - 1
+                if (newQuantity > 0) {
+                    val updatedItem = it.copy(
+                        quantity = newQuantity,
+                        totalPrice = it.food.price * newQuantity
                     )
+
+                    FirebaseFirestore.getInstance()
+                        .collection("Orders")
+                        .document(it.orderId)
+                        .update(
+                            mapOf(
+                                "quantity" to updatedItem.quantity,
+                                "totalPrice" to updatedItem.totalPrice
+                            )
+                        )
+                    updatedItem
                 } else {
-                    null // remove if quantity reaches 0
+                    FirebaseFirestore.getInstance()
+                        .collection("Orders")
+                        .document(it.orderId)
+                        .delete()
+                    null
                 }
             } else it
         }
+
         _orders.value = updatedList
     }
+
 
     fun removeItem(item: CartItem) {
-        val updatedList = _orders.value.toMutableList().filterNot {
-            it.food.id == item.food.id && it.takeAway == item.takeAway
-        }
+        val updatedList = _orders.value.orEmpty().filterNot { it.orderId == item.orderId }
         _orders.value = updatedList
-    }
 
+        if (item.orderId.isNotEmpty()) {
+            FirebaseFirestore.getInstance()
+                .collection("Orders")
+                .document(item.orderId)
+                .delete()
+        }
+    }
 }
 
