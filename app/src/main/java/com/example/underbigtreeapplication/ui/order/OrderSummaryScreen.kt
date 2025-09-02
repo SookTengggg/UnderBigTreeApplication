@@ -194,7 +194,6 @@ fun OrderSummaryScreen(
             }
             Spacer(modifier = Modifier.height(24.dp))
 
-            val firstOrderId = groupedOrders.firstOrNull()?.orderId ?: "NO_ORDER"
             Button(
                 onClick = {
                     if (selectedPayment == "tng") {

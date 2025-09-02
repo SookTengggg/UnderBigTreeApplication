@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.example.underbigtreeapplication.model.CartItem
 import com.example.underbigtreeapplication.model.Payment
 import com.example.underbigtreeapplication.utils.maskPhoneNumber
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,11 @@ class OrderSummaryViewModel : ViewModel() {
     val orders: StateFlow<List<CartItem>> = _orders
 
     fun fetchOrders() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
         db.collection("Orders")
+            .whereEqualTo("userId", userId)
+            .whereEqualTo("status", "pending")
             .get()
             .addOnSuccessListener { result ->
                 val list = result.mapNotNull { it.toObject(CartItem::class.java) }
@@ -51,7 +56,6 @@ class OrderSummaryViewModel : ViewModel() {
 
         _orders.value = updatedList
     }
-
 
     fun decreaseQuantity(item: CartItem) {
         val updatedList = _orders.value.orEmpty().mapNotNull {
@@ -86,7 +90,6 @@ class OrderSummaryViewModel : ViewModel() {
         _orders.value = updatedList
     }
 
-
     fun removeItem(item: CartItem) {
         val updatedList = _orders.value.orEmpty().filterNot { it.orderId == item.orderId }
         _orders.value = updatedList
@@ -99,16 +102,9 @@ class OrderSummaryViewModel : ViewModel() {
         }
     }
 
-    private val phoneNumber = "+60123456780" //from profile
-
-    fun getMaskedPhone(): String = maskPhoneNumber(phoneNumber)
-
-    fun getTransactionDate(): String {
-        val current = LocalDateTime.now()
-        val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.getDefault())
-        return current.format(formatter)
+    fun getCurrentOrderIds(): List<String> {
+        return _orders.value.map { it.orderId }
     }
-
 
 }
 

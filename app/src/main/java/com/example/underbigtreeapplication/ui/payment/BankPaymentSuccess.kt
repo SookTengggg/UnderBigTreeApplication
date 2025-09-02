@@ -19,11 +19,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.utils.formatAmount
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
+import com.example.underbigtreeapplication.viewModel.PaymentViewModel
 
 @Composable
 fun BankPaymentSuccess(
     totalAmount: Double,
-    viewModel: OrderSummaryViewModel = viewModel(),
+    viewModel: PaymentViewModel = viewModel(),
+    summaryViewModel: OrderSummaryViewModel = viewModel(),
     onDoneClick: () -> Unit = {}
 ) {
     val transactionDate = viewModel.getTransactionDate()
@@ -74,7 +76,19 @@ fun BankPaymentSuccess(
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = { onDoneClick() },
+            onClick = {
+                summaryViewModel.fetchOrders()
+                val currentOrderIds = summaryViewModel.getCurrentOrderIds()
+
+                viewModel.storePayment(
+                    orderIds = currentOrderIds,
+                    totalAmount = totalAmount,
+                    method = "Bank",
+                    onSuccess = {
+                        onDoneClick()
+                    }
+                )
+            },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFF9D648),
                 contentColor = Color.Black

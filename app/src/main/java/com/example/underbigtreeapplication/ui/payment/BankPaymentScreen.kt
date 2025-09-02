@@ -26,11 +26,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.utils.formatAmount
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
+import com.example.underbigtreeapplication.viewModel.PaymentViewModel
 
 @Composable
 fun BankPaymentScreen(
     totalAmount: Double,
-    viewModel: OrderSummaryViewModel = viewModel(),
+    viewModel: PaymentViewModel = viewModel(),
     onReject: () -> Unit = {},
     onApprove: (String) -> Unit = {}
 ) {
