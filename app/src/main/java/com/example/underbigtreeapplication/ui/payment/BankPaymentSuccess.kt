@@ -7,6 +7,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,6 +25,7 @@ import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.utils.formatAmount
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
 import com.example.underbigtreeapplication.viewModel.PaymentViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun BankPaymentSuccess(
@@ -29,6 +35,27 @@ fun BankPaymentSuccess(
     onDoneClick: () -> Unit = {}
 ) {
     val transactionDate = viewModel.getTransactionDate()
+    var countdown by remember { mutableStateOf(3) }
+
+    LaunchedEffect(Unit) {
+        summaryViewModel.fetchOrders()
+
+        while (countdown > 0) {
+            delay(1000)
+            countdown--
+        }
+
+        val currentOrderIds = summaryViewModel.getCurrentOrderIds()
+        viewModel.storePayment(
+            orderIds = currentOrderIds,
+            totalAmount = totalAmount,
+            method = "Bank",
+            onSuccess = {
+                onDoneClick()
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -76,19 +103,7 @@ fun BankPaymentSuccess(
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = {
-                summaryViewModel.fetchOrders()
-                val currentOrderIds = summaryViewModel.getCurrentOrderIds()
-
-                viewModel.storePayment(
-                    orderIds = currentOrderIds,
-                    totalAmount = totalAmount,
-                    method = "Bank",
-                    onSuccess = {
-                        onDoneClick()
-                    }
-                )
-            },
+            onClick = {},
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFF9D648),
                 contentColor = Color.Black
@@ -97,7 +112,7 @@ fun BankPaymentSuccess(
                 .fillMaxWidth()
                 .padding(top = 24.dp)
         ) {
-            Text("Done")
+            Text("Done ($countdown s)")
         }
         Spacer(modifier = Modifier.height(100.dp))
     }

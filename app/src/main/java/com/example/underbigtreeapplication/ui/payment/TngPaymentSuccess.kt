@@ -114,19 +114,7 @@ fun TngPaymentSuccess(
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = {
-                summaryViewModel.fetchOrders()
-                val currentOrderIds = summaryViewModel.getCurrentOrderIds()
-
-                viewModel.storePayment(
-                    orderIds = currentOrderIds,
-                    totalAmount = totalAmount,
-                    method = "TNG",
-                    onSuccess = {
-                        onReturnClick()
-                    }
-                )
-            },
+            onClick = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
