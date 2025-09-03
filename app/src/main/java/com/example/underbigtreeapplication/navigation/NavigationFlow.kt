@@ -1,15 +1,18 @@
 package com.example.underbigtreeapplication.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.underbigtreeapplication.data.local.AppDatabase
 import com.example.underbigtreeapplication.repository.MenuRepository
+import com.example.underbigtreeapplication.repository.ProfileRepository
 import com.example.underbigtreeapplication.ui.customerHomePage.CustHomeScreen
 import com.example.underbigtreeapplication.ui.loginPage.LoginScreen
 import com.example.underbigtreeapplication.ui.order.OrderScreen
@@ -18,12 +21,17 @@ import com.example.underbigtreeapplication.ui.payment.BankPaymentScreen
 import com.example.underbigtreeapplication.ui.payment.BankPaymentSuccess
 import com.example.underbigtreeapplication.ui.payment.TngPaymentScreen
 import com.example.underbigtreeapplication.ui.payment.TngPaymentSuccess
+import com.example.underbigtreeapplication.ui.profile.EditProfileScreen
+import com.example.underbigtreeapplication.ui.profile.ProfileScreen
 import com.example.underbigtreeapplication.ui.signupPage.SignupScreen
 import com.example.underbigtreeapplication.ui.welcomePage.WelcomeScreen
 import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModelFactory
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
+import com.example.underbigtreeapplication.viewModel.ProfileUiState
+import com.example.underbigtreeapplication.viewModel.ProfileViewModel
+import com.example.underbigtreeapplication.viewModel.ProfileViewModelFactory
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -86,6 +94,27 @@ fun NavigationFlow(navController: NavHostController) {
                 viewModel = viewModel,
                 navController = navController,
                 cartViewModel = cartViewModel
+            )
+        }
+
+        composable ("profile"){
+            val context = LocalContext.current
+            val database = AppDatabase.getDatabase(context)
+            val repository = remember { ProfileRepository(database.profileDao()) }
+            val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(repository))
+
+            ProfileScreen(navController, profileViewModel)
+        }
+
+        composable ("editProfile") {
+            val context = LocalContext.current
+            val database = AppDatabase.getDatabase(context)
+            val repository = remember { ProfileRepository(database.profileDao()) }
+            val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(repository))
+
+            EditProfileScreen(
+                navController = navController,
+                viewModel = profileViewModel
             )
         }
 

@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -16,10 +20,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.underbigtreeapplication.data.local.AppDatabase
 import com.example.underbigtreeapplication.data.remote.FirebaseService
+import com.example.underbigtreeapplication.repository.Profile
+import com.example.underbigtreeapplication.repository.ProfileRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignupScreen(
     onRegisterSuccess: () -> Unit,
@@ -29,10 +37,18 @@ fun SignupScreen(
     val auth = FirebaseAuth.getInstance()
 
     var email by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val database = AppDatabase.getDatabase(context)
+    val profileDao = database.profileDao()
+    val profileRepository = ProfileRepository(dao = profileDao)
+    var expanded by remember { mutableStateOf(false) }
+    val genderOptions = listOf("Female", "Male", "Prefer not to disclose")
+    var selectedGender by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -46,12 +62,58 @@ fun SignupScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            OutlinedTextField(
+                value = phone,
+                onValueChange = { phone = it },
+                label = { Text("Phone Number") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+
+            OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = {expanded = !expanded},
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = selectedGender,
+                    onValueChange = {  },
+                    label = { Text("Gender (Optional)") },
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    genderOptions.forEach { gender ->
+                        DropdownMenuItem(
+                            text = { Text(gender) },
+                            onClick = {
+                                selectedGender = gender
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
 
             OutlinedTextField(
                 value = password,
@@ -77,6 +139,11 @@ fun SignupScreen(
 
             Button(
                 onClick = {
+                    if (name.isBlank() || phone.isBlank() || email.isBlank()) {
+                        errorMessage = "Please fill in all required fields"
+                        return@Button
+                    }
+
                     if (password != confirmPassword) {
                         errorMessage = "Passwords do not match"
                         return@Button
@@ -84,11 +151,23 @@ fun SignupScreen(
                     isLoading = true
                     scope.launch {
                         val result = FirebaseService.registerUser(email, password)
-                        isLoading = false
-                        result.onSuccess {
-                            Toast.makeText(context, "Signup successful!", Toast.LENGTH_SHORT).show()
-                            onRegisterSuccess()
+
+                        result.onSuccess { authResult ->
+                            try{
+                                profileRepository.createProfile(
+                                    name = name,
+                                    phone = phone,
+                                    email = email,
+                                    gender = selectedGender
+                                )
+                                Toast.makeText(context, "Signup successful!", Toast.LENGTH_SHORT).show()
+                                onRegisterSuccess()
+                            } catch (e: Exception) {
+                                errorMessage = e.message ?: "Profile Creation failed"
+                            }
+                            isLoading = false
                         }.onFailure {
+                            isLoading = false
                             errorMessage = it.message ?: "Signup failed"
                         }
                     }

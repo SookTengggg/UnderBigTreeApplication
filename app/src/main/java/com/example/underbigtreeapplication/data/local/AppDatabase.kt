@@ -7,16 +7,18 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.underbigtreeapplication.model.CategoryEntity
 import com.example.underbigtreeapplication.model.MenuEntity
+import com.example.underbigtreeapplication.model.ProfileEntity
 
 @Database(
-    entities = [MenuEntity::class, CategoryEntity::class],
-    version = 1,
+    entities = [MenuEntity::class, CategoryEntity::class, ProfileEntity::class],
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun menuDao(): MenuDao
     abstract fun categoryDao(): CategoryDao
+    abstract fun profileDao(): ProfileDao
 
     companion object{
         @Volatile
@@ -28,7 +30,8 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "app_database"
-                ).build()
+                ).fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }
