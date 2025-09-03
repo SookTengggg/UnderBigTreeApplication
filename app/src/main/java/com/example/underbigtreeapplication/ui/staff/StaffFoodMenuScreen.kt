@@ -40,9 +40,9 @@ data class NavItem(
 
 val staffNavItems = listOf(
     NavItem(Icons.Filled.Home, "Home", "staffHome"),
-    NavItem(Icons.Filled.Edit, "Edit", "edit"),
+    NavItem(Icons.Filled.Edit, "Edit", "staffEdit"),
     NavItem(Icons.Filled.Menu, "Activity","staffActivityScreen"),
-    NavItem(Icons.Filled.Person, "Profile", "profile")
+    NavItem(Icons.Filled.Person, "Profile", "staffProfile")
 )
 
 @Composable

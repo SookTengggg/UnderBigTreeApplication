@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHost
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -28,6 +29,8 @@ import com.example.underbigtreeapplication.ui.payment.TngPaymentSuccess
 import com.example.underbigtreeapplication.ui.profile.EditProfileScreen
 import com.example.underbigtreeapplication.ui.profile.ProfileScreen
 import com.example.underbigtreeapplication.ui.pointPage.RewardsScreen
+import com.example.underbigtreeapplication.ui.profile.StaffEditProfileScreen
+import com.example.underbigtreeapplication.ui.profile.StaffProfileScreen
 import com.example.underbigtreeapplication.ui.signupPage.SignupScreen
 import com.example.underbigtreeapplication.ui.staff.StaffFoodMenuScreen
 import com.example.underbigtreeapplication.ui.staff.StaffWelcomeScreen
@@ -50,6 +53,7 @@ fun NavigationFlow(navController: NavHostController) {
 
     val isLoggedIn = sharedPref.getBoolean("isLoggedIn", false)
     val userType = sharedPref.getString("userType", "")
+
 
     val startDestination = when {
         isLoggedIn && userType == "staff" -> "staffHome"
@@ -150,13 +154,22 @@ fun NavigationFlow(navController: NavHostController) {
             )
         }
 
-        composable ("profile"){
+        composable ("custProfile"){
             val context = LocalContext.current
             val database = AppDatabase.getDatabase(context)
             val repository = remember { ProfileRepository(database.profileDao()) }
             val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(repository))
 
             ProfileScreen(navController, profileViewModel)
+        }
+
+        composable ("staffProfile"){
+            val context = LocalContext.current
+            val database = AppDatabase.getDatabase(context)
+            val repository = remember { ProfileRepository(database.profileDao()) }
+            val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(repository))
+
+            StaffProfileScreen(navController, profileViewModel)
         }
 
         composable ("editProfile") {
@@ -166,6 +179,18 @@ fun NavigationFlow(navController: NavHostController) {
             val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(repository))
 
             EditProfileScreen(
+                navController = navController,
+                viewModel = profileViewModel
+            )
+        }
+
+        composable ("staffEditProfile") {
+            val context = LocalContext.current
+            val database = AppDatabase.getDatabase(context)
+            val repository = remember { ProfileRepository(database.profileDao()) }
+            val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(repository))
+
+            StaffEditProfileScreen(
                 navController = navController,
                 viewModel = profileViewModel
             )
@@ -240,3 +265,4 @@ fun NavigationFlow(navController: NavHostController) {
         }
     }
 }
+

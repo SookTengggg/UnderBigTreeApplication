@@ -60,7 +60,7 @@ import com.example.underbigtreeapplication.viewModel.ProfileViewModelFactory
 import com.google.common.collect.Table
 
 @Composable
-fun EditProfileScreen(navController: NavController, viewModel: ProfileViewModel){
+fun StaffEditProfileScreen(navController: NavController, viewModel: ProfileViewModel){
     val uiState by viewModel.profileState.collectAsStateWithLifecycle()
 
     val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
@@ -92,7 +92,7 @@ fun EditProfileScreen(navController: NavController, viewModel: ProfileViewModel)
         is ProfileUiState.Success -> {
             val profile = (uiState as ProfileUiState.Success).profile
             if (profile != null) {
-                EditProfileContent(
+                StaffEditProfileContent(
                     profile = profile,
                     onBackClick = {navController.popBackStack()},
                     viewModel = viewModel,
@@ -110,12 +110,8 @@ fun EditProfileScreen(navController: NavController, viewModel: ProfileViewModel)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditProfileContent(profile: Profile, viewModel: ProfileViewModel, onBackClick: () -> Unit, onSaveClick: (Profile) -> Unit, isTablet: Boolean = false){
-    val name by viewModel.name.collectAsStateWithLifecycle()
+fun StaffEditProfileContent(profile: Profile, viewModel: ProfileViewModel, onBackClick: () -> Unit, onSaveClick: (Profile) -> Unit, isTablet: Boolean = false){
     val phone by viewModel.phone.collectAsStateWithLifecycle()
-    var expanded by remember { mutableStateOf(false) }
-    val genderOptions = listOf("Female", "Male", "Prefer not to disclose")
-    val selectedGender by viewModel.gender.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
 
     Scaffold (
@@ -150,14 +146,6 @@ fun EditProfileContent(profile: Profile, viewModel: ProfileViewModel, onBackClic
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = name,
-                onValueChange = { viewModel.name.value = it },
-                label = { Text("Name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            OutlinedTextField(
                 value = phone,
                 onValueChange = { viewModel.phone.value = it },
                 label = { Text("Phone Number") },
@@ -166,43 +154,12 @@ fun EditProfileContent(profile: Profile, viewModel: ProfileViewModel, onBackClic
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = {expanded = !expanded},
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = selectedGender,
-                    onValueChange = {  },
-                    label = { Text("Gender (Optional)") },
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    genderOptions.forEach { gender ->
-                        DropdownMenuItem(
-                            text = { Text(gender) },
-                            onClick = {
-                                viewModel.gender.value = gender
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
                     val updatedProfile = profile.copy(
-                        name = name,
-                        phone = phone,
-                        gender = selectedGender,
+                        phone = phone
                     )
                     viewModel.updateProfile(updatedProfile)
                     onSaveClick(updatedProfile)

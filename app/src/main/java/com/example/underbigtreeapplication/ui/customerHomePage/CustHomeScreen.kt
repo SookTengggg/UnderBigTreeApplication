@@ -61,6 +61,8 @@ import kotlin.collections.forEach
 import coil.compose.AsyncImage
 import com.example.underbigtreeapplication.model.CategoryEntity
 import com.example.underbigtreeapplication.model.MenuEntity
+import com.example.underbigtreeapplication.ui.BottomNavigation
+import com.example.underbigtreeapplication.ui.SideNavigationBar
 import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModel
 import kotlin.text.category
@@ -74,7 +76,7 @@ data class NavItem(
 val navItems = listOf(
     NavItem(Icons.Filled.Home, "Home", "home"),
     NavItem(Icons.Filled.Menu, "Activity","activityScreen"),
-    NavItem(Icons.Filled.Person, "Profile", "profile")
+    NavItem(Icons.Filled.Person, "Profile", "custProfile")
 )
 
 @Composable
@@ -92,71 +94,85 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
     val screenWidthDp = configuration.screenWidthDp
     val isTablet = screenWidthDp >= 600
 
-    Box(Modifier.fillMaxSize().statusBarsPadding()) {
+    Box(Modifier
+        .fillMaxSize()
+        .statusBarsPadding()) {
         if (isTablet) {
-            Row(Modifier.fillMaxSize()) {
-                SideNavigationBar(
-                    items = navItems,
-                    selected = selectedItem,
-                    onItemSelected = { newSelection -> selectedItem = newSelection })
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp)
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.End
+           Box(Modifier.fillMaxSize()) {
+                Row(Modifier.fillMaxSize()) {
+                    SideNavigationBar(
+                        items = navItems,
+                        selected = selectedItem,
+                        navController = navController,
+                        onItemSelected = { newSelection -> selectedItem = newSelection }
                     ) {
-                        Points(points = points, onClick = {navController.navigate("point")})
-                    }
 
-                    TopCategory(
-                        categories = sortedCategories,
-                        selected = selectedCategory,
-                        onCategorySelected = { viewModel.selectCategory(it) })
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(8.dp)
+                        ) {
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                Points(
+                                    points = points,
+                                    onClick = { navController.navigate("point") })
+                            }
 
-                    val filteredItems = if (selectedCategory == "All") {
-                        menus
-                    } else {
-                        menus.filter { it.category.contains(selectedCategory) }
-                    }
+                            TopCategory(
+                                categories = sortedCategories,
+                                selected = selectedCategory,
+                                onCategorySelected = { viewModel.selectCategory(it) })
 
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(3),
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(top = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(filteredItems) { item ->
-                            MenuCard(item, onClick = {
-                                navController.navigate("order/${it.id}")
-                            })
+                            val filteredItems = if (selectedCategory == "All") {
+                                menus
+                            } else {
+                                menus.filter { it.category.contains(selectedCategory) }
+                            }
+
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(3),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(top = 12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(filteredItems) { item ->
+                                    MenuCard(item, onClick = {
+                                        navController.navigate("order/${it.id}")
+                                    })
+                                }
+                            }
                         }
                     }
-                }
-            }
-            if (cartItems.isNotEmpty()) {
-                FloatingActionButton(
-                    onClick = { navController.navigate("orderSummaryScreen") },
-                    modifier = Modifier
-                        .align(alignment = Alignment.BottomEnd)
-                        .padding(24.dp)
-                        .fillMaxWidth(0.95f),
-                    containerColor = Color.Black,
-                    contentColor = Color.White
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Cart · ${cartViewModel.getTotalQuantity()} item(s)")
-                        Text("RM %.2f".format(cartViewModel.getTotalPrice()))
+
                     }
+               if (cartItems.isNotEmpty()) {
+                   FloatingActionButton(
+                       onClick = { navController.navigate("orderSummaryScreen") },
+                       modifier = Modifier
+                           .align(alignment = Alignment.BottomEnd)
+                           .padding(24.dp)
+                           .fillMaxWidth(0.95f),
+                       containerColor = Color.Black,
+                       contentColor = Color.White
+                   ) {
+                       Row(
+                           verticalAlignment = Alignment.CenterVertically,
+                           modifier = Modifier
+                               .fillMaxWidth()
+                               .padding(16.dp),
+                           horizontalArrangement = Arrangement.SpaceBetween
+                       ) {
+                           Text("Cart · ${cartViewModel.getTotalQuantity()} item(s)")
+                           Text("RM %.2f".format(cartViewModel.getTotalPrice()))
+                       }
+                   }
                 }
             }
         } else {
@@ -204,7 +220,9 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text("Cart · ${cartViewModel.getTotalQuantity()} item(s)")
@@ -380,76 +398,6 @@ fun MenuCard(item: MenuEntity, onClick: (MenuEntity) -> Unit){
                     modifier = Modifier.padding(top = 4.dp)
                 )
                 Text("RM %.2f".format(item.price))
-            }
-        }
-    }
-}
-
-@Composable
-fun BottomNavigation(items: List<NavItem>, navController: NavController, modifier: Modifier = Modifier) {
-    val currentDestination = navController.currentBackStackEntryAsState().value?.destination?.route
-
-    NavigationBar (
-        modifier = modifier.fillMaxWidth(),
-        containerColor = Color(0xFFEFEFEF),
-        contentColor = Color.Black
-    ) {
-        items.forEach { item ->
-            val selected = currentDestination == item.route
-
-            NavigationBarItem(
-                selected = selected,
-                onClick = {
-                    if (currentDestination != item.route) {
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.startDestinationId) {saveState = true}
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                },
-                icon = {
-                    Icon(
-                        item.icon,
-                        contentDescription = item.label,
-                    )
-                }
-            )
-        }
-    }
-}
-
-@Composable
-fun SideNavigationBar(items: List<NavItem>, selected: String, onItemSelected: (String) -> Unit, modifier: Modifier = Modifier) {
-    Column (modifier = Modifier
-        .fillMaxHeight()
-        .width(200.dp)
-        .background(Color(0xFFEFEFEF)),
-        verticalArrangement = Arrangement.Top
-    ) {
-        items.forEach { item ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onItemSelected(item.route) }
-                    .background(
-                        if (selected == item.route) Color.White else Color.Transparent
-                    )
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-
-                ) {
-                Icon(
-                    item.icon,
-                    contentDescription = item.label
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = item.label,
-                    fontSize = 12.sp,
-                    fontWeight = if (selected == item.route) FontWeight.Bold else FontWeight.Normal,
-                    color = Color.Black
-                )
             }
         }
     }

@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.underbigtreeapplication.ui.customerHomePage.NavItem
 import com.example.underbigtreeapplication.ui.signupPage.PreviewSignupScreen
 import kotlin.collections.forEach
@@ -67,16 +68,25 @@ fun BottomNavigation(items: List<NavItem>, navController: NavController, modifie
 }
 
 @Composable
-fun SideNavigationBar(items: List<NavItem>, selected: String, onItemSelected: (String) -> Unit, content: @Composable () -> Unit) {
+fun SideNavigationBar(items: List<NavItem>, selected: String, navController: NavController, onItemSelected: (String) -> Unit, content: @Composable () -> Unit) {
     PermanentNavigationDrawer(
         drawerContent = {
-            PermanentDrawerSheet {
+            PermanentDrawerSheet (modifier = Modifier.width(150.dp)) {
                 items.forEach { item ->
                     NavigationDrawerItem(
                         label = { Text(item.label) },
                         icon = { Icon(item.icon, contentDescription = item.label) },
                         selected = selected == item.route,
-                        onClick = { onItemSelected(item.route) }
+                        onClick = {
+                            if(navController.currentBackStackEntry?.destination?.route != item.route) {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.startDestinationId) {saveState = true}
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                            onItemSelected(item.route)
+                        }
                     )
                 }
             }
@@ -84,42 +94,9 @@ fun SideNavigationBar(items: List<NavItem>, selected: String, onItemSelected: (S
     ) {
         Box(
             modifier = Modifier
-                //.weight(1f)
                 .fillMaxHeight()
         ) {
             content()
         }
     }
-
-
-//    Column (modifier = Modifier
-//        .fillMaxHeight()
-//        .width(200.dp)
-//        .background(Color(0xFFEFEFEF)),
-//        verticalArrangement = Arrangement.Top
-//    ) {
-//        items.forEach { item ->
-//            Row(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .clickable {onItemSelected(item.route)}
-//                    .background(if (selected == item.route) Color.White else Color.Transparent)
-//                    .padding(12.dp),
-//                verticalAlignment = Alignment.CenterVertically,
-//
-//                ) {
-//                Icon(
-//                    item.icon,
-//                    contentDescription = item.label
-//                )
-//                Spacer(modifier = Modifier.width(8.dp))
-//                Text(
-//                    text = item.label,
-//                    fontSize = 12.sp,
-//                    fontWeight = if (selected == item.route) FontWeight.Bold else FontWeight.Normal,
-//                    color = Color.Black
-//                )
-//            }
-//        }
-//    }
 }

@@ -23,6 +23,12 @@ class ProfileViewModel (private  val repository: ProfileRepository) : ViewModel(
     val profileState: StateFlow<ProfileUiState> = _profileState.asStateFlow()
     private val storage = FirebaseStorage.getInstance().reference
 
+    val name = MutableStateFlow("")
+    val phone = MutableStateFlow("")
+    val gender = MutableStateFlow("")
+
+    private var initialized = false
+
     fun loadProfile(uid: String) {
         viewModelScope.launch {
             try {
@@ -40,6 +46,12 @@ class ProfileViewModel (private  val repository: ProfileRepository) : ViewModel(
         viewModelScope.launch {
             try {
                 repository.observeProfileByEmail(email).collect { profile ->
+                    if (profile != null && !initialized){
+                        name.value = profile.name
+                        phone.value = profile.phone
+                        gender.value = profile.gender ?: ""
+                        initialized = true
+                    }
                     _profileState.value = ProfileUiState.Success(profile)
                 }
             } catch (e: Exception) {
