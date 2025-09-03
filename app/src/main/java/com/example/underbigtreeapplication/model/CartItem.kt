@@ -9,6 +9,9 @@ data class CartItem(
     val takeAway: Boolean = false,
     val remarks: String = "",
     val totalPrice: Double = 0.0,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val userId: String = "",
+    val status: String = "pending",
+    val paymentId: String? = null
 )
 

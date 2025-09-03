@@ -109,7 +109,7 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
                         Modifier.fillMaxWidth().padding(bottom = 8.dp),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        Points(points = points, onClick = {/*TODO*/ })
+                        Points(points = points, onClick = {navController.navigate("point")})
                     }
 
                     TopCategory(
@@ -141,7 +141,7 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
             }
             if (cartItems.isNotEmpty()) {
                 FloatingActionButton(
-                    onClick = { /*TODO*/ },
+                    onClick = { navController.navigate("orderSummaryScreen") },
                     modifier = Modifier
                         .align(alignment = Alignment.BottomEnd)
                         .padding(24.dp)
@@ -169,7 +169,7 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
                 )
 
                 Column(Modifier.fillMaxSize()) {
-                    Points(points = points, onClick = {/* TODO */ })
+                    Points(points = points, onClick = {navController.navigate("point")})
 
                     val filteredItems = if (selectedCategory == "All") {
                         menus
@@ -194,7 +194,7 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
             }
             if (cartItems.isNotEmpty()) {
                 FloatingActionButton(
-                    onClick = { navController.navigate("orderSummaryScreen") },
+                    onClick = {navController.navigate("orderSummaryScreen") },
                     modifier = Modifier
                         .align(alignment = Alignment.BottomEnd)
                         .padding(bottom = 110.dp, end = 5.dp)

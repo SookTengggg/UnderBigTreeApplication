@@ -6,6 +6,7 @@ import androidx.media3.common.util.UnstableApi
 import com.example.underbigtreeapplication.model.CartItem
 import com.example.underbigtreeapplication.model.Food
 import com.example.underbigtreeapplication.model.Option
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -125,10 +126,12 @@ class OrderViewModel(private val foodId: String) : ViewModel() {
     val quantity: StateFlow<Int> = _quantity
 
     fun toggleSauce(sauce: Option, checked: Boolean) {
+        if (!sauce.availability) return
         _selectedSauces.value = if (checked) _selectedSauces.value + sauce else _selectedSauces.value - sauce
     }
 
     fun toggleAddOn(addOn: Option, checked: Boolean) {
+        if (!addOn.availability) return
         _selectedAddOns.value = if (checked) _selectedAddOns.value + addOn else _selectedAddOns.value - addOn
     }
 
@@ -171,21 +174,18 @@ class OrderViewModel(private val foodId: String) : ViewModel() {
         val counterRef = db.collection("Counter").document("OrdersCounter")
 
         db.runTransaction { transaction ->
-            //Read the last order number
             val snapshot = transaction.get(counterRef)
             val lastNumber = snapshot.getLong("lastOrderNumber") ?: 0
             val newNumber = lastNumber + 1
 
-            //Update counter
             transaction.update(counterRef, "lastOrderNumber", newNumber)
 
-            //Generate orderId
+            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown"
+
             val orderId = "O" + newNumber.toString().padStart(4, '0')
 
-            //Copy CartItem with new orderId
-            val orderWithId = cartItem.copy(orderId = orderId)
+            val orderWithId = cartItem.copy(orderId = orderId, userId = userId)
 
-            //Save the order document
             val orderRef = db.collection("Orders").document(orderId)
             transaction.set(orderRef, orderWithId)
         }.addOnSuccessListener { onSuccess() }
