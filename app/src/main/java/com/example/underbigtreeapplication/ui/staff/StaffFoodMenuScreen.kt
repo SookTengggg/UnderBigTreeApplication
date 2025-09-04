@@ -16,6 +16,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,32 +42,33 @@ data class NavItem(
 )
 
 val staffNavItems = listOf(
-    NavItem(Icons.Filled.Home, "Home", "staffHome"),
-    NavItem(Icons.Filled.Edit, "Edit", "staffEdit"),
-    NavItem(Icons.Filled.Menu, "Activity","staffActivityScreen"),
+    NavItem(Icons.Filled.Home, "Home", "staffActivity"),
+    NavItem(Icons.Filled.Edit, "Edit", "staffAvailability"),
+    NavItem(Icons.Filled.Menu, "Activity","staffFood"),
     NavItem(Icons.Filled.Person, "Profile", "staffProfile")
 )
 
 @Composable
-fun StaffFoodMenuScreen(navController: NavController, staffViewModel: StaffViewModel, onAddMenu: () -> Unit, onMenuClick: (MenuEntity) -> Unit) {
+fun StaffFoodMenuScreen(navController: NavController, staffViewModel: StaffViewModel, onMenuClick: (MenuEntity) -> Unit) {
     val menuList by staffViewModel.menus.collectAsState()
+    var showChooseScreen by remember { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().padding(16.dp)) {
+        Column(Modifier.fillMaxSize().padding(32.dp)) {
             Text(
                 text = "Menu",
                 fontSize = 20.sp,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxSize().padding(bottom = 100.dp)
             ) {
                 item {
-                    AddMenuCard(onAddMenu)
+                    AddMenuCard(onClick = { showChooseScreen = true })
                 }
                 items(menuList) { menu ->
                     MenuCard(menu, onMenuClick)
@@ -76,13 +80,20 @@ fun StaffFoodMenuScreen(navController: NavController, staffViewModel: StaffViewM
             navController = navController,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
+        if (showChooseScreen) {
+            StaffChooseScreen(
+                navController = navController,
+                staffViewModel = staffViewModel,
+                onDismiss = { showChooseScreen = false }
+            )
+        }
     }
 }
 
 @Composable
 fun AddMenuCard(onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().height(250.dp).clickable { onClick() },
+        modifier = Modifier.fillMaxWidth().height(230.dp).clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F2F2)),
         shape = RoundedCornerShape(8.dp)
     ) {
@@ -113,7 +124,7 @@ fun MenuCard(menu: MenuEntity, onClick: (MenuEntity) -> Unit) {
                 modifier = Modifier.size(80.dp)
             )
             Text(menu.name, fontSize = 14.sp)
-            Text("RM %.2f".format(menu.price), fontSize = 12.sp, color = Color.Gray)
+            Text("RM %.2f".format(menu.price), fontSize = 4.sp, color = Color.Gray)
         }
     }
 }
