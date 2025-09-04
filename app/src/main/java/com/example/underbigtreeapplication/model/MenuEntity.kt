@@ -15,4 +15,3 @@ data class MenuEntity(
     val addOn: List<String>,
     val sauce: List<String>
 )
-

@@ -14,4 +14,3 @@ data class CartItem(
     val status: String = "pending",
     val paymentId: String? = null
 )
-
