@@ -42,7 +42,7 @@ import kotlinx.coroutines.delay
 fun TngPaymentSuccess(
     totalAmount: Double,
     viewModel: PaymentViewModel = viewModel(),
-    summaryViewModel: OrderSummaryViewModel = viewModel(),
+    summaryViewModel: OrderSummaryViewModel,
     onReturnClick: () -> Unit = {},
 ) {
 

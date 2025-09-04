@@ -33,7 +33,7 @@ import kotlinx.coroutines.delay
 fun BankPaymentSuccess(
     totalAmount: Double,
     viewModel: PaymentViewModel = viewModel(),
-    summaryViewModel: OrderSummaryViewModel = viewModel(),
+    summaryViewModel: OrderSummaryViewModel,
     onDoneClick: () -> Unit = {}
 ) {
     val transactionDate = viewModel.getTransactionDate()

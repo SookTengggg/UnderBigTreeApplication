@@ -167,7 +167,8 @@ fun OrderScreen(
                     modifier = Modifier
                         .weight(2f)
                         .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     if (!food.category.contains("Drinks")) {
                         Row(
@@ -549,30 +550,6 @@ fun OrderScreen(
                 ) {
                     Text("Add to Cart")
                 }
-            Button(
-                onClick = {
-                    if (!food.category.any {
-                            it.equals(
-                                "Drinks",
-                                ignoreCase = true
-                            )
-                        } && selectedSauces.isEmpty()) {
-                        showSauceWarning = true
-                    } else {
-                        val cartItem = viewModel.buildCartItem()
-                        cartViewModel.addToCart(cartItem)
-                        viewModel.saveOrder(
-                            cartItem,
-                            onSuccess = {
-                                onPlaceOrder(cartItem)
-                            }
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Add to Cart")
-            }
 
                 if (showSauceWarning) {
                     AlertDialog(
