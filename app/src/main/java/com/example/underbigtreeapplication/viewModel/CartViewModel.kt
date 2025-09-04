@@ -10,32 +10,70 @@ class CartViewModel : ViewModel() {
     private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
     val cartItems: StateFlow<List<CartItem>> = _cartItems
 
-    //add new item into a list (current + item --> create new list with the item added)
-    fun addToCart(item: CartItem){
+    fun addToCart(item: CartItem) {
         _cartItems.update { current ->
-            current + item
+            val existing = current.find { it.isSameItem(item) }
+            if (existing != null) {
+                current.map {
+                    if (it.isSameItem(item)) {
+                        it.copy(
+                            quantity = it.quantity + item.quantity,
+                            totalPrice = (it.quantity + item.quantity) * it.food.price
+                        )
+                    } else it
+                }
+            } else {
+                current + item.copy(
+                    totalPrice = item.quantity * item.food.price
+                )
+            }
         }
     }
 
-    //remove specific item from cart
-    fun removeFromCart(item: CartItem){
+    val CartItem.computedTotalPrice: Double
+        get() = quantity * food.price
+
+
+    fun updateQuantity(item: CartItem, newQuantity: Int) {
         _cartItems.update { current ->
-            current - item
+            if (newQuantity <= 0) {
+                current.filterNot { it.isSameItem(item) }
+            } else {
+                current.map {
+                    if (it.isSameItem(item)) {
+                        it.copy(
+                            quantity = newQuantity,
+                            totalPrice = newQuantity * it.food.price
+                        )
+                    } else it
+                }
+            }
         }
     }
 
-    //remove everything from the cart
+    fun removeFromCart(item: CartItem) {
+        _cartItems.update { current ->
+            current.filterNot { it.isSameItem(item) }
+        }
+    }
+
     fun clearCart(){
         _cartItems.value = emptyList()
     }
 
-    //calculates total cart by summing cartItem.totalPrice
     fun getTotalPrice(): Double {
         return _cartItems.value.sumOf {it.totalPrice}
     }
 
-    //calculate total number of item in cart
     fun getTotalQuantity(): Int {
         return _cartItems.value.sumOf { it.quantity }
     }
+}
+
+fun CartItem.isSameItem(other: CartItem): Boolean{
+    return food.id == other.food.id &&
+            selectedSauces == other.selectedSauces &&
+            selectedAddOns == other.selectedAddOns &&
+            takeAway == other.takeAway &&
+            remarks == other.remarks
 }

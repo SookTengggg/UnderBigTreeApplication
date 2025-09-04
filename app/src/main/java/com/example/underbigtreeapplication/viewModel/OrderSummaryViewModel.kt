@@ -14,7 +14,7 @@ import java.util.Locale
 import kotlin.compareTo
 import kotlin.times
 
-class OrderSummaryViewModel : ViewModel() {
+class OrderSummaryViewModel(private val cartViewModel: CartViewModel) : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
     private val _orders = MutableStateFlow<List<CartItem>>(emptyList())
     val orders: StateFlow<List<CartItem>> = _orders
@@ -29,6 +29,9 @@ class OrderSummaryViewModel : ViewModel() {
             .addOnSuccessListener { result ->
                 val list = result.mapNotNull { it.toObject(CartItem::class.java) }
                 _orders.value = list
+
+                cartViewModel?.clearCart()
+                list.forEach { cartViewModel?.addToCart(it) }
             }
     }
 
@@ -50,6 +53,8 @@ class OrderSummaryViewModel : ViewModel() {
                             "totalPrice" to updatedItem.totalPrice
                         )
                     )
+               cartViewModel?.updateQuantity(updatedItem, newQuantity)
+
                 updatedItem
             } else it
         }
@@ -76,12 +81,14 @@ class OrderSummaryViewModel : ViewModel() {
                                 "totalPrice" to updatedItem.totalPrice
                             )
                         )
+                    cartViewModel?.updateQuantity(updatedItem, newQuantity)
                     updatedItem
                 } else {
                     FirebaseFirestore.getInstance()
                         .collection("Orders")
                         .document(it.orderId)
                         .delete()
+                    cartViewModel?.removeFromCart(it)
                     null
                 }
             } else it
@@ -100,6 +107,7 @@ class OrderSummaryViewModel : ViewModel() {
                 .document(item.orderId)
                 .delete()
         }
+        cartViewModel?.removeFromCart(item)
     }
 
     fun getCurrentOrderIds(): List<String> {

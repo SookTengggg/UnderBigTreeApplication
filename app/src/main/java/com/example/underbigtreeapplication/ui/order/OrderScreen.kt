@@ -45,12 +45,14 @@ import com.example.underbigtreeapplication.model.CartItem
 import com.example.underbigtreeapplication.model.Option
 import com.example.underbigtreeapplication.utils.formatAmount
 import com.example.underbigtreeapplication.utils.isOnline
+import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.OrderViewModel
 import com.example.underbigtreeapplication.viewModel.OrderViewModelFactory
 
 @Composable
 fun OrderScreen(
     foodId: String,
+    cartViewModel: CartViewModel,
     onBackClick: () -> Unit = {},
     onPlaceOrder: (CartItem) -> Unit = {}
 ) {
@@ -89,7 +91,6 @@ fun OrderScreen(
         factory = OrderViewModelFactory(foodId)
     )
     val food by viewModel.food.collectAsState()
-
     val selectedSauces by viewModel.selectedSauces.collectAsState()
     val selectedAddOns by viewModel.selectedAddOns.collectAsState()
     val takeAway by viewModel.takeAway.collectAsState()
@@ -548,6 +549,30 @@ fun OrderScreen(
                 ) {
                     Text("Add to Cart")
                 }
+            Button(
+                onClick = {
+                    if (!food.category.any {
+                            it.equals(
+                                "Drinks",
+                                ignoreCase = true
+                            )
+                        } && selectedSauces.isEmpty()) {
+                        showSauceWarning = true
+                    } else {
+                        val cartItem = viewModel.buildCartItem()
+                        cartViewModel.addToCart(cartItem)
+                        viewModel.saveOrder(
+                            cartItem,
+                            onSuccess = {
+                                onPlaceOrder(cartItem)
+                            }
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Add to Cart")
+            }
 
                 if (showSauceWarning) {
                     AlertDialog(
