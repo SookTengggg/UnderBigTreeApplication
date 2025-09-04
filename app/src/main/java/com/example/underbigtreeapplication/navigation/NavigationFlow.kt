@@ -298,8 +298,12 @@ fun NavigationFlow(navController: NavHostController) {
 
         composable("tngSuccess/{totalAmount}") { backStackEntry ->
             val totalAmount = backStackEntry.arguments?.getString("totalAmount")?.toDoubleOrNull() ?: 0.0
+            val summaryViewModel: OrderSummaryViewModel = viewModel(
+                factory = OrderSummaryViewModelFactory(cartViewModel)
+            )
             TngPaymentSuccess(
                 totalAmount = totalAmount,
+                summaryViewModel = summaryViewModel,
                 onReturnClick = {
                     navController.navigate("home")
                 }
@@ -319,8 +323,12 @@ fun NavigationFlow(navController: NavHostController) {
 
         composable("bankSuccess/{totalAmount}") { backStackEntry ->
             val totalAmount = backStackEntry.arguments?.getString("totalAmount")?.toDoubleOrNull() ?: 0.0
+            val summaryViewModel: OrderSummaryViewModel = viewModel(
+                factory = OrderSummaryViewModelFactory(cartViewModel)
+            )
             BankPaymentSuccess(
                 totalAmount = totalAmount,
+                summaryViewModel = summaryViewModel,
                 onDoneClick ={navController.navigate("home")}
             )
         }

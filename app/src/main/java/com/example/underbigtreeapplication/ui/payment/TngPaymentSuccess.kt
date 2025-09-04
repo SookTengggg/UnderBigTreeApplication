@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -40,7 +42,7 @@ import kotlinx.coroutines.delay
 fun TngPaymentSuccess(
     totalAmount: Double,
     viewModel: PaymentViewModel = viewModel(),
-    summaryViewModel: OrderSummaryViewModel = viewModel(),
+    summaryViewModel: OrderSummaryViewModel,
     onReturnClick: () -> Unit = {},
 ) {
 
@@ -63,10 +65,12 @@ fun TngPaymentSuccess(
         )
     }
 
+    val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
+            .verticalScroll(scrollState)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
