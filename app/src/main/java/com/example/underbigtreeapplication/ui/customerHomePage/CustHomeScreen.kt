@@ -1,5 +1,6 @@
 package com.example.underbigtreeapplication.ui.customerHomePage
 
+import ads_mobile_sdk.na
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -34,12 +35,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,16 +59,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlin.collections.forEach
 import coil.compose.AsyncImage
+import com.example.underbigtreeapplication.model.CartItem
 import com.example.underbigtreeapplication.model.CategoryEntity
 import com.example.underbigtreeapplication.model.MenuEntity
 import com.example.underbigtreeapplication.ui.BottomNavigation
 import com.example.underbigtreeapplication.ui.SideNavigationBar
 import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModel
+import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
+import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModelFactory
 import kotlin.text.category
 
 data class NavItem(
@@ -94,12 +102,27 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
     val screenWidthDp = configuration.screenWidthDp
     val isTablet = screenWidthDp >= 600
 
-    Box(Modifier
-        .fillMaxSize()
-        .statusBarsPadding()) {
+    Scaffold(
+        bottomBar = {
+            if (!isTablet) {
+                BottomNavigation(
+                    items = navItems,
+                    navController = navController
+                )
+            }
+        },
+        floatingActionButton = {
+            CartFab(
+                navController,
+                orderSummaryViewModel = viewModel(factory = OrderSummaryViewModelFactory(cartViewModel))
+            )
+        },
+        floatingActionButtonPosition = FabPosition.Center,
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
         if (isTablet) {
-           Box(Modifier.fillMaxSize()) {
-                Row(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxSize()) {
+                Row(Modifier.fillMaxSize().padding(innerPadding)) {
                     SideNavigationBar(
                         items = navItems,
                         selected = selectedItem,
@@ -151,32 +174,10 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
                         }
                     }
 
-                    }
-               if (cartItems.isNotEmpty()) {
-                   FloatingActionButton(
-                       onClick = { navController.navigate("orderSummaryScreen") },
-                       modifier = Modifier
-                           .align(alignment = Alignment.BottomEnd)
-                           .padding(24.dp)
-                           .fillMaxWidth(0.95f),
-                       containerColor = Color.Black,
-                       contentColor = Color.White
-                   ) {
-                       Row(
-                           verticalAlignment = Alignment.CenterVertically,
-                           modifier = Modifier
-                               .fillMaxWidth()
-                               .padding(16.dp),
-                           horizontalArrangement = Arrangement.SpaceBetween
-                       ) {
-                           Text("Cart · ${cartViewModel.getTotalQuantity()} item(s)")
-                           Text("RM %.2f".format(cartViewModel.getTotalPrice()))
-                       }
-                   }
                 }
             }
         } else {
-            Row(Modifier.fillMaxSize()) {
+            Row(Modifier.fillMaxSize().padding(innerPadding)) {
 
                 SideNavigation(
                     categories = sortedCategories,
@@ -196,8 +197,7 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
                     LazyColumn(
                         Modifier
                             .weight(1f)
-                            .padding(horizontal = 8.dp)
-                            .padding(bottom = 85.dp),
+                            .padding(horizontal = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(filteredItems) { item ->
@@ -208,35 +208,8 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
                     }
                 }
             }
-            if (cartItems.isNotEmpty()) {
-                FloatingActionButton(
-                    onClick = {navController.navigate("orderSummaryScreen") },
-                    modifier = Modifier
-                        .align(alignment = Alignment.BottomEnd)
-                        .padding(bottom = 110.dp, end = 5.dp)
-                        .fillMaxWidth(0.95f),
-                    containerColor = Color.Black,
-                    contentColor = Color.White
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Cart · ${cartViewModel.getTotalQuantity()} item(s)")
-                        Text("RM %.2f".format(cartViewModel.getTotalPrice()))
-                    }
-                }
-            }
-
-            BottomNavigation(
-                items = navItems,
-                navController = navController,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
         }
+
     }
 }
 
@@ -247,7 +220,7 @@ fun SideNavigation(categories: List<CategoryEntity>, selected: String, onCategor
             .width(80.dp)
             .fillMaxHeight()
             .background(Color(0xFFEFEFEF))
-            .padding(top = 32.dp, bottom = 85.dp)
+            .padding(top = 32.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -398,6 +371,37 @@ fun MenuCard(item: MenuEntity, onClick: (MenuEntity) -> Unit){
                     modifier = Modifier.padding(top = 4.dp)
                 )
                 Text("RM %.2f".format(item.price))
+            }
+        }
+    }
+}
+
+@Composable
+fun CartFab(navController: NavController, orderSummaryViewModel: OrderSummaryViewModel) {
+
+    LaunchedEffect(Unit) {
+        orderSummaryViewModel.fetchOrders()
+    }
+    val orderItems by orderSummaryViewModel.orders.collectAsState()
+
+    if (orderItems.isNotEmpty()) {
+        FloatingActionButton(
+            onClick = { navController.navigate("orderSummaryScreen") },
+            containerColor = Color.Black,
+            contentColor = Color.White
+        ) {
+            val totalQuantity = orderItems.sumOf { it.quantity }
+            val totalPrice = orderItems.sumOf { it.totalPrice }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Cart · $totalQuantity item(s)")
+                Text("RM %.2f".format(totalPrice))
             }
         }
     }

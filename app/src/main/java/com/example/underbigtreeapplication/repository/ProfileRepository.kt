@@ -118,9 +118,6 @@ class ProfileRepository(
     }
 
     suspend fun updateProfile(profile: Profile) {
-        if (profile.role == UserRole.STAFF) {
-            throw IllegalAccessException("Staff profile cannot be edited")
-        }
         col.document(profile.uid).set(profile.toEntity()).await()
         dao.upsert(profile.toEntity())
     }

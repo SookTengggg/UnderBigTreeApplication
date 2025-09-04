@@ -39,6 +39,7 @@ import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModelFactory
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
+import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModelFactory
 import com.example.underbigtreeapplication.viewModel.ProfileUiState
 import com.example.underbigtreeapplication.viewModel.ProfileViewModel
 import com.example.underbigtreeapplication.viewModel.ProfileViewModelFactory
@@ -207,6 +208,7 @@ fun NavigationFlow(navController: NavHostController) {
             val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
             OrderScreen(
                 foodId = foodId,
+                cartViewModel = cartViewModel,
                 onBackClick = { navController.popBackStack() },
                 onPlaceOrder = { cartItem ->
                     cartViewModel.addToCart(cartItem)
@@ -216,7 +218,9 @@ fun NavigationFlow(navController: NavHostController) {
         }
 
         composable("orderSummaryScreen") {
-            val summaryViewModel: OrderSummaryViewModel = viewModel()
+            val summaryViewModel: OrderSummaryViewModel = viewModel(
+                factory = OrderSummaryViewModelFactory(cartViewModel)
+            )
             OrderSummaryScreen(
                 viewModel = summaryViewModel,
                 navController,
