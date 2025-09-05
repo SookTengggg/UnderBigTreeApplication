@@ -12,5 +12,6 @@ data class CartItem(
     val timestamp: Long = System.currentTimeMillis(),
     val userId: String = "",
     val status: String = "pending",
-    val paymentId: String? = null
+    val paymentId: String? = null,
+    val orderStatus: String = "pending"
 )

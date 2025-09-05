@@ -5,9 +5,9 @@ import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.example.underbigtreeapplication.data.local.Converters
 
-@Entity(tableName = "menu")
+@Entity(tableName = "drink")
 @TypeConverters(Converters::class)
-data class MenuEntity(
+data class DrinkEntity(
     @PrimaryKey val id: String,
     val name: String,
     val price: Double,

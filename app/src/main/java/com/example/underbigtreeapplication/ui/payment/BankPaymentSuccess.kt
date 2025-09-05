@@ -36,7 +36,7 @@ fun BankPaymentSuccess(
     summaryViewModel: OrderSummaryViewModel,
     onDoneClick: () -> Unit = {}
 ) {
-    val transactionDate = viewModel.getTransactionDate()
+    val transactionDate = viewModel.getTransactionDate(System.currentTimeMillis())
     var countdown by remember { mutableStateOf(3) }
 
     LaunchedEffect(Unit) {

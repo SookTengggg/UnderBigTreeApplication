@@ -18,6 +18,7 @@ import com.example.underbigtreeapplication.data.local.AppDatabase
 import com.example.underbigtreeapplication.model.MenuEntity
 import com.example.underbigtreeapplication.repository.MenuRepository
 import com.example.underbigtreeapplication.repository.ProfileRepository
+import com.example.underbigtreeapplication.ui.customerActivity.CustActivityScreen
 import com.example.underbigtreeapplication.ui.customerHomePage.CustHomeScreen
 import com.example.underbigtreeapplication.ui.loginPage.LoginScreen
 import com.example.underbigtreeapplication.ui.order.OrderScreen
@@ -32,18 +33,24 @@ import com.example.underbigtreeapplication.ui.pointPage.RewardsScreen
 import com.example.underbigtreeapplication.ui.profile.StaffEditProfileScreen
 import com.example.underbigtreeapplication.ui.profile.StaffProfileScreen
 import com.example.underbigtreeapplication.ui.signupPage.SignupScreen
+import com.example.underbigtreeapplication.ui.staff.FoodEditScreen
+import com.example.underbigtreeapplication.ui.staff.StaffAddDrinkScreen
+import com.example.underbigtreeapplication.ui.staff.StaffAddFoodScreen
+import com.example.underbigtreeapplication.ui.staff.StaffAddOnScreen
+import com.example.underbigtreeapplication.ui.staff.StaffAddSauceScreen
+import com.example.underbigtreeapplication.ui.staff.StaffFoodAvailabilityScreen
 import com.example.underbigtreeapplication.ui.staff.StaffFoodMenuScreen
 import com.example.underbigtreeapplication.ui.staff.StaffWelcomeScreen
 import com.example.underbigtreeapplication.ui.welcomePage.WelcomeScreen
 import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModelFactory
+import com.example.underbigtreeapplication.viewModel.CustomerActivityViewModel
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModelFactory
 import com.example.underbigtreeapplication.viewModel.ProfileUiState
 import com.example.underbigtreeapplication.viewModel.ProfileViewModel
 import com.example.underbigtreeapplication.viewModel.ProfileViewModelFactory
-import com.example.underbigtreeapplication.viewModel.RewardViewModel
 import com.example.underbigtreeapplication.viewModel.StaffViewModel
 import com.example.underbigtreeapplication.viewModel.StaffViewModelFactory
 import com.google.firebase.auth.FirebaseAuth
@@ -63,7 +70,6 @@ fun NavigationFlow(navController: NavHostController) {
         else -> "login"
     }
     val cartViewModel: CartViewModel = viewModel()
-    val rewardViewModel: RewardViewModel = viewModel()
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable("login") {
@@ -137,8 +143,79 @@ fun NavigationFlow(navController: NavHostController) {
             StaffFoodMenuScreen(
                 navController = navController,
                 staffViewModel = staffViewModel,
-                onAddMenu = { navController.navigate("addMenu") },
                 onMenuClick = { menuItem -> navController.navigate("editMenu/${menuItem.id}") }
+            )
+        }
+
+        composable("staffAvailability") {
+            val database = AppDatabase.getDatabase(context)
+            val repository = MenuRepository(database)
+            val staffViewModel: StaffViewModel = viewModel(
+                factory = StaffViewModelFactory(repository)
+            )
+            StaffFoodAvailabilityScreen(
+                navController = navController,
+                staffViewModel = staffViewModel,
+                onMenuClick = { menuItem -> navController.navigate("editMenu/${menuItem.id}") }
+            )
+        }
+
+        composable("addFood") {
+            StaffAddFoodScreen(
+                navController = navController,
+                staffViewModel = viewModel(
+                    factory = StaffViewModelFactory(
+                        MenuRepository(
+                            AppDatabase.getDatabase(context)
+                        )
+                    )
+                )
+            )
+        }
+
+        composable("addDrink") {
+            StaffAddDrinkScreen(
+                navController = navController,
+                staffViewModel = viewModel(
+                    factory = StaffViewModelFactory(
+                        MenuRepository(
+                            AppDatabase.getDatabase(context)
+                        )
+                    )
+                )
+            )
+        }
+
+        composable("addSauce") {
+            StaffAddSauceScreen(
+                navController = navController,
+                staffViewModel = viewModel(factory = StaffViewModelFactory(MenuRepository(AppDatabase.getDatabase(context))))
+            )
+        }
+
+        composable("addAddOn") {
+            StaffAddOnScreen(
+                navController = navController,
+                staffViewModel = viewModel(factory = StaffViewModelFactory(MenuRepository(AppDatabase.getDatabase(context))))
+            )
+        }
+
+        composable(
+            route = "foodEdit/{foodId}/{foodType}",
+            arguments = listOf(
+                navArgument("foodId") { type = NavType.StringType },
+                navArgument("foodType") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
+            val foodType = backStackEntry.arguments?.getString("foodType") ?: "menu"
+            val staffViewModel: StaffViewModel = viewModel()
+
+            FoodEditScreen(
+                navController = navController,
+                foodId = foodId,
+                foodType = foodType,
+                staffViewModel = staffViewModel
             )
         }
 
@@ -157,6 +234,13 @@ fun NavigationFlow(navController: NavHostController) {
             )
         }
 
+        composable ("custActivity"){
+            val viewModel: CustomerActivityViewModel = viewModel()
+            CustActivityScreen(
+                navController = navController,
+                viewModel = viewModel
+            )
+        }
 
         composable ("custProfile"){
             val context = LocalContext.current
@@ -202,9 +286,8 @@ fun NavigationFlow(navController: NavHostController) {
 
         composable("point") {
             RewardsScreen(
-                viewModel = rewardViewModel,
                 onBackClick = { navController.popBackStack() },
-                onRedeemClick={navController.navigate("orderSummaryScreen")}
+                onRedeemClick={}
             )
         }
 
@@ -227,7 +310,6 @@ fun NavigationFlow(navController: NavHostController) {
             )
             OrderSummaryScreen(
                 viewModel = summaryViewModel,
-                rewardViewModel = rewardViewModel,
                 navController,
                 onBackClick = { navController.popBackStack() },
             )
@@ -249,14 +331,11 @@ fun NavigationFlow(navController: NavHostController) {
             val summaryViewModel: OrderSummaryViewModel = viewModel(
                 factory = OrderSummaryViewModelFactory(cartViewModel)
             )
-
             TngPaymentSuccess(
                 totalAmount = totalAmount,
                 summaryViewModel = summaryViewModel,
-                onReturnClick = { earnedPoints ->
-                    navController.navigate("home") {
-                        popUpTo("tngSuccess/{totalAmount}") { inclusive = true }
-                    }
+                onReturnClick = {
+                    navController.navigate("home")
                 }
             )
         }

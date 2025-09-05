@@ -8,16 +8,21 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.time.Instant
+import java.time.ZoneId
 
 class PaymentViewModel : ViewModel() {
     private val phoneNumber = "+60123456780" // from profile
 
     fun getMaskedPhone(): String = maskPhoneNumber(phoneNumber)
 
-    fun getTransactionDate(): String {
-        val current = LocalDateTime.now()
+    fun getTransactionDate(timestamp: Long): String {
+        //val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.getDefault())
-        return current.format(formatter)
+        return Instant.ofEpochMilli(timestamp)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime()
+            .format(formatter)
     }
 
     fun storePayment(
@@ -45,7 +50,7 @@ class PaymentViewModel : ViewModel() {
                 orderIds = orderIds,
                 totalPrice = totalAmount,
                 paymentMethod = method,
-                transactionDate = getTransactionDate(),
+                transactionDate = System.currentTimeMillis(),
                 phone = phoneNumber,
                 userId = userId
             )

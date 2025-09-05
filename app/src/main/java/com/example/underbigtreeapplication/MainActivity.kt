@@ -32,7 +32,7 @@ fun UnderBigTreeApp() {
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun UnderBigTreeAppPreview() {
     UnderBigTreeApplicationTheme {
         UnderBigTreeApp()
     }
