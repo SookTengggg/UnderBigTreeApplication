@@ -6,7 +6,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -31,20 +33,20 @@ fun StaffAddDrinkScreen(
     var desc by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var imageUrl by remember { mutableStateOf("") }
+    var useLink by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
     var newId by remember { mutableStateOf("") }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    // Generate next Drink ID from Firebase
     LaunchedEffect(Unit) {
         val lastId = staffViewModel.getLastDrinkIdFromFirebase()
         val nextIdNumber = lastId?.removePrefix("M")?.toIntOrNull()?.plus(1) ?: 1
         newId = "M%04d".format(nextIdNumber)
     }
 
-    // Image picker launcher
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -71,22 +73,60 @@ fun StaffAddDrinkScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Image upload field
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp)
-                    .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                    .clickable { launcher.launch("image/*") },
-                contentAlignment = Alignment.Center
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                if (imageUri != null) {
-                    AsyncImage(model = imageUri, contentDescription = "Drink Image")
-                } else {
-                    Text(
-                        "Click to upload image",
-                        color = if (showError && imageUri == null) Color.Red else Color.Gray
+                FilterChip(
+                    selected = !useLink,
+                    onClick = { useLink = false },
+                    label = { Text("Upload Image") }
+                )
+                FilterChip(
+                    selected = useLink,
+                    onClick = { useLink = true },
+                    label = { Text("Use Image Link") }
+                )
+            }
+            if (useLink) {
+                OutlinedTextField(
+                    value = imageUrl,
+                    onValueChange = { imageUrl = it },
+                    label = { Text("Image URL") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 56.dp, max = 100.dp)
+                        .verticalScroll(rememberScrollState()),
+                    maxLines = Int.MAX_VALUE,
+                    singleLine = false,
+                    isError = showError && imageUrl.isBlank()
+                )
+                if (imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = "Preview",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp)
                     )
+                }
+        } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                        .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                        .clickable { launcher.launch("image/*") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (imageUri != null) {
+                        AsyncImage(model = imageUri, contentDescription = "Drink Image")
+                    } else {
+                        Text(
+                            "Click to upload image",
+                            color = if (showError && imageUri == null) Color.Red else Color.Gray
+                        )
+                    }
                 }
             }
 
@@ -115,17 +155,25 @@ fun StaffAddDrinkScreen(
 
             Button(
                 onClick = {
-                    if (name.isBlank() || price.isBlank() || imageUri == null) {
+                    if (name.isBlank() || price.isBlank() ||
+                        (!useLink && imageUri == null) ||
+                        (useLink && imageUrl.isBlank())
+                    ) {
                         showError = true
                     } else {
                         coroutineScope.launch {
-                            val imageUrl = staffViewModel.uploadDrinkImageToFirebase(imageUri!!, newId)
-                            if (imageUrl != null) {
+                            val finalImageUrl = if (useLink) {
+                                imageUrl
+                            } else {
+                                staffViewModel.uploadDrinkImageFromUri(imageUri!!, newId)
+                            }
+
+                            if (!finalImageUrl.isNullOrBlank()) {
                                 val newDrink = DrinkEntity(
                                     id = newId,
                                     name = name,
                                     price = price.toDoubleOrNull() ?: 0.0,
-                                    imageRes = imageUrl,
+                                    imageRes = finalImageUrl,
                                     category = listOf("Drinks"),
                                     desc = desc,
                                     availability = true
@@ -135,10 +183,9 @@ fun StaffAddDrinkScreen(
                                 kotlinx.coroutines.delay(300)
                                 navController.popBackStack()
                             } else {
-                                snackbarHostState.showSnackbar("Failed to upload image. Try again.")
+                                snackbarHostState.showSnackbar("Your imageRes is Failed to upload image. Try again."+finalImageUrl)
                             }
                         }
-
                     }
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally)

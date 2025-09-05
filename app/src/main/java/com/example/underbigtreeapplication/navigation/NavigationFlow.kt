@@ -32,6 +32,7 @@ import com.example.underbigtreeapplication.ui.pointPage.RewardsScreen
 import com.example.underbigtreeapplication.ui.profile.StaffEditProfileScreen
 import com.example.underbigtreeapplication.ui.profile.StaffProfileScreen
 import com.example.underbigtreeapplication.ui.signupPage.SignupScreen
+import com.example.underbigtreeapplication.ui.staff.FoodEditScreen
 import com.example.underbigtreeapplication.ui.staff.StaffAddDrinkScreen
 import com.example.underbigtreeapplication.ui.staff.StaffAddFoodScreen
 import com.example.underbigtreeapplication.ui.staff.StaffAddOnScreen
@@ -194,6 +195,25 @@ fun NavigationFlow(navController: NavHostController) {
             StaffAddOnScreen(
                 navController = navController,
                 staffViewModel = viewModel(factory = StaffViewModelFactory(MenuRepository(AppDatabase.getDatabase(context))))
+            )
+        }
+
+        composable(
+            route = "foodEdit/{foodId}/{foodType}",
+            arguments = listOf(
+                navArgument("foodId") { type = NavType.StringType },
+                navArgument("foodType") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
+            val foodType = backStackEntry.arguments?.getString("foodType") ?: "menu"
+            val staffViewModel: StaffViewModel = viewModel()
+
+            FoodEditScreen(
+                navController = navController,
+                foodId = foodId,
+                foodType = foodType,
+                staffViewModel = staffViewModel
             )
         }
 

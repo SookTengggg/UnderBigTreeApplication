@@ -1,5 +1,6 @@
 package com.example.underbigtreeapplication.repository
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.example.underbigtreeapplication.data.local.AppDatabase
@@ -7,9 +8,12 @@ import com.example.underbigtreeapplication.model.AddOnEntity
 import com.example.underbigtreeapplication.model.CategoryEntity
 import com.example.underbigtreeapplication.model.DrinkEntity
 import com.example.underbigtreeapplication.model.MenuEntity
+import com.example.underbigtreeapplication.model.OptionItem
 import com.example.underbigtreeapplication.model.SauceEntity
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -21,6 +25,9 @@ class MenuRepository (private val db: AppDatabase) {
     val firebaseStorage = Firebase.storage
     //room flows
     val menus: Flow<List<MenuEntity>> = db.menuDao().getAllMenus()
+    val sauces: Flow<List<SauceEntity>> = db.sauceDao().getAllSauces()
+    val addons: Flow<List<AddOnEntity>> = db.AddOnDao().getAllAddOn()
+
     val categories: Flow<List<CategoryEntity>> = db.categoryDao().getAllCategories()
     //refresh from firebase
     suspend fun refreshFromFirebase() = withContext(Dispatchers.IO){
@@ -52,6 +59,29 @@ class MenuRepository (private val db: AppDatabase) {
             }
 
             db.categoryDao().insertCategories(categoryList)
+
+            val sauceSnapshot = firestore.collection("Sauce").get().await()
+            val sauceList = sauceSnapshot.map { doc ->
+                SauceEntity(
+                    id = doc.id,
+                    name = doc.getString("name") ?: "",
+                    price = doc.getDouble("price") ?: 0.0,
+                    availability = doc.getBoolean("availability") ?: false
+                )
+            }
+            db.sauceDao().insertSauces(sauceList)
+
+            val addonSnapshot = firestore.collection("AddOn").get().await()
+            val addonList = addonSnapshot.map { doc ->
+                AddOnEntity(
+                    id = doc.id,
+                    name = doc.getString("name") ?: "",
+                    price = doc.getDouble("price") ?: 0.0,
+                    availability = doc.getBoolean("availability") ?: false
+                )
+            }
+            db.AddOnDao().insertAddOn(addonList)
+
         } catch (e: Exception) {
             Log.e("MenuRepository", "Error fetching data from firebase", e)
         }
@@ -84,6 +114,19 @@ class MenuRepository (private val db: AppDatabase) {
         }
     }
 
+    suspend fun getAllSauceNames(): List<OptionItem> = withContext(Dispatchers.IO) {
+        try {
+            val snapshot = firestore.collection("Sauce").get().await()
+            snapshot.documents.mapNotNull { doc ->
+                val id = doc.id
+                val name = doc.getString("name")
+                if (name != null) OptionItem(id, name) else null
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     suspend fun getLastSauceId(): String? = withContext(Dispatchers.IO) {
         try {
             val snapshot = firestore.collection("Sauce").get().await()
@@ -108,6 +151,31 @@ class MenuRepository (private val db: AppDatabase) {
 
         } catch (e: Exception) {
             Log.e("MenuRepository", "Error adding sauce", e)
+        }
+    }
+    suspend fun updateSauceAvailability(sauceId: String, availability: Boolean) = withContext(Dispatchers.IO) {
+        try {
+            firestore.collection("Sauce")
+                .document(sauceId)
+                .update("availability", availability)
+                .await()
+
+            db.sauceDao().updateAvailability(sauceId, availability)
+
+        } catch (e: Exception) {
+            Log.e("MenuRepository", "Error updating availability", e)
+        }
+    }
+    suspend fun getAllAddOnNames(): List<OptionItem> = withContext(Dispatchers.IO) {
+        try {
+            val snapshot = firestore.collection("AddOn").get().await()
+            snapshot.documents.mapNotNull { doc ->
+                val id = doc.id
+                val name = doc.getString("name")
+                if (name != null) OptionItem(id, name) else null
+            }
+        } catch (e: Exception) {
+            emptyList()
         }
     }
     suspend fun getLastAddOnId(): String? = withContext(Dispatchers.IO) {
@@ -136,6 +204,19 @@ class MenuRepository (private val db: AppDatabase) {
         }
     }
 
+    suspend fun updateAddOnAvailability(addonId: String, available: Boolean) = withContext(Dispatchers.IO) {
+        try {
+            firestore.collection("AddOn")
+                .document(addonId)
+                .update("availability", available)
+                .await()
+
+            db.AddOnDao().updateAvailability(addonId, available)
+        } catch (e: Exception) {
+            Log.e("MenuRepository", "Error updating add-on availability", e)
+        }
+    }
+
     suspend fun getLastDrinkId(): String? = withContext(Dispatchers.IO) {
         try {
             val snapshot = firestore.collection("Menu").get().await()
@@ -149,14 +230,17 @@ class MenuRepository (private val db: AppDatabase) {
         }
     }
 
-    suspend fun uploadDrinkImage(uri: Uri, drinkId: String): String? {
+    suspend fun uploadDrinkImageFromUri(imageUri: Uri, id: String): String? {
+        val storageReference: StorageReference = FirebaseStorage.getInstance().getReference("$id.jpg")
         return try {
-            val storageRef = firebaseStorage.reference.child("drinks/$drinkId.jpg")
-            storageRef.putFile(uri).await()
-            storageRef.downloadUrl.await().toString()
+            // Upload the file
+            val uploadTask = storageReference.putFile(imageUri)
+            // Wait for the upload to complete
+            uploadTask.await() // Make sure to use Kotlin Coroutines or a similar approach to wait for the task to finish
+            // Get the download URL
+            storageReference.downloadUrl.await().toString()
         } catch (e: Exception) {
-            Log.e("MenuRepository", "Error uploading drink image", e)
-            null
+            null  // Handle the error appropriately
         }
     }
 
@@ -169,6 +253,18 @@ class MenuRepository (private val db: AppDatabase) {
 
         } catch (e: Exception) {
             Log.e("MenuRepository", "Error adding drink", e)
+        }
+    }
+
+    suspend fun addFood(food: MenuEntity) = withContext(Dispatchers.IO) {
+        try {
+            firestore.collection("Menu")
+                .document(food.id)
+                .set(food.copy())
+                .await()
+
+        } catch (e: Exception) {
+            Log.e("MenuRepository", "Error adding food", e)
         }
     }
     suspend fun deleteMenu(menuId: String) = withContext(Dispatchers.IO) {

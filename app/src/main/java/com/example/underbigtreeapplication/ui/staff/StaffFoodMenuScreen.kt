@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,7 +30,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import coil.compose.AsyncImage
 import com.example.underbigtreeapplication.model.MenuEntity
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.underbigtreeapplication.model.AddOnEntity
+import com.example.underbigtreeapplication.model.SauceEntity
 import com.example.underbigtreeapplication.ui.customerHomePage.MenuCard
 import com.example.underbigtreeapplication.viewModel.StaffViewModel
 import com.example.underbigtreeapplication.viewModel.StaffViewModelFactory
@@ -51,6 +55,7 @@ val staffNavItems = listOf(
 @Composable
 fun StaffFoodMenuScreen(navController: NavController, staffViewModel: StaffViewModel, onMenuClick: (MenuEntity) -> Unit) {
     val menuList by staffViewModel.menus.collectAsState()
+    val addon by staffViewModel.addons.collectAsState()
     var showChooseScreen by remember { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize()) {
@@ -71,7 +76,14 @@ fun StaffFoodMenuScreen(navController: NavController, staffViewModel: StaffViewM
                     AddMenuCard(onClick = { showChooseScreen = true })
                 }
                 items(menuList) { menu ->
-                    MenuCard(menu, onMenuClick)
+                    StaffMenuCard(menu) { selectedMenu ->
+                        navController.navigate("foodEdit/${selectedMenu.id}/menu")
+                    }
+                }
+                items(addon) { addon ->
+                    StaffAddOnCard(addon) { selectedAddOn ->
+                        navController.navigate("foodEdit/${selectedAddOn.id}/addon")
+                    }
                 }
             }
         }
@@ -93,7 +105,7 @@ fun StaffFoodMenuScreen(navController: NavController, staffViewModel: StaffViewM
 @Composable
 fun AddMenuCard(onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().height(230.dp).clickable { onClick() },
+        modifier = Modifier.fillMaxWidth().height(250.dp).clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F2F2)),
         shape = RoundedCornerShape(8.dp)
     ) {
@@ -109,22 +121,91 @@ fun AddMenuCard(onClick: () -> Unit) {
 }
 
 @Composable
-fun MenuCard(menu: MenuEntity, onClick: (MenuEntity) -> Unit) {
+fun StaffMenuCard(item: MenuEntity, onClick: (MenuEntity) -> Unit){
+    val isAvailable = item.availability
+
     Card(
-        modifier = Modifier.fillMaxWidth().height(150.dp).clickable { onClick(menu) },
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
+        modifier = Modifier.fillMaxWidth().height(250.dp)
+            .then(
+                if (isAvailable) Modifier.clickable { onClick(item) }
+                else Modifier
+            ),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFEFEFEF),
+            contentColor = Color.Black
+        )
+    ){
         Column(
-            modifier = Modifier.padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AsyncImage(
-                model = menu.imageRes,
-                contentDescription = menu.name,
-                modifier = Modifier.size(80.dp)
-            )
-            Text(menu.name, fontSize = 14.sp)
-            Text("RM %.2f".format(menu.price), fontSize = 4.sp, color = Color.Gray)
+            modifier = Modifier.fillMaxWidth().padding(16.dp).height(IntrinsicSize.Min),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center){
+            if(!isAvailable){
+                Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                    Text(
+                        text = "*Unavailable", color = Color.Red, fontWeight = FontWeight.SemiBold, fontSize = 10.sp
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier.alpha(if (isAvailable) 1f else 0.3f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ){
+                AsyncImage(
+                    model = item.imageRes,
+                    contentDescription = item.name,
+                    modifier = Modifier.size(120.dp)
+                )
+                Text(
+                    item.name,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                Text("RM %.2f".format(item.price))
+            }
+        }
+    }
+}
+
+@Composable
+fun StaffAddOnCard(item: AddOnEntity, onClick: (AddOnEntity) -> Unit){
+    val isAvailable = item.availability
+
+    Card(
+        modifier = Modifier.fillMaxWidth().height(250.dp)
+            .then(
+                if (isAvailable) Modifier.clickable { onClick(item) }
+                else Modifier
+            ),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFEFEFEF),
+            contentColor = Color.Black
+        )
+    ){
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
+        {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(16.dp).height(IntrinsicSize.Min),
+                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center){
+                if(!isAvailable){
+                    Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                        Text(
+                            text = "*Unavailable", color = Color.Red, fontWeight = FontWeight.SemiBold, fontSize = 10.sp
+                        )
+                    }
+                }
+                Column(
+                    modifier = Modifier.alpha(if (isAvailable) 1f else 0.3f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+                    Text(
+                        item.name,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                    Text("RM %.2f".format(item.price))
+                }
+            }
         }
     }
 }
