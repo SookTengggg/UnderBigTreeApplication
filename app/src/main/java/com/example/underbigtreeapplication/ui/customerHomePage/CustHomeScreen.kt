@@ -83,7 +83,7 @@ data class NavItem(
 
 val navItems = listOf(
     NavItem(Icons.Filled.Home, "Home", "home"),
-    NavItem(Icons.Filled.Menu, "Activity","activityScreen"),
+    NavItem(Icons.Filled.Menu, "Activity","custActivity"),
     NavItem(Icons.Filled.Person, "Profile", "custProfile")
 )
 
