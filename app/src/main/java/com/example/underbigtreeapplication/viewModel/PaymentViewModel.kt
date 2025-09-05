@@ -20,13 +20,11 @@ class PaymentViewModel : ViewModel() {
         return current.format(formatter)
     }
 
-
-
     fun storePayment(
         orderIds: List<String>,
         totalAmount: Double,
         method: String,
-        onSuccess: () -> Unit = {},
+        onSuccess: (Int) -> Unit = {},
     ) {
         val db = FirebaseFirestore.getInstance()
         val counterRef = db.collection("Counter").document("PaymentCounter")
@@ -63,7 +61,8 @@ class PaymentViewModel : ViewModel() {
                 ))
             }
         }.addOnSuccessListener {
-            onSuccess()
+            val earnedPoints = totalAmount.toInt()
+            onSuccess(earnedPoints)
         }
     }
 }

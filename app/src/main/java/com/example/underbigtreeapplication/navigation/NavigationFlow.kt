@@ -43,6 +43,7 @@ import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModelFactor
 import com.example.underbigtreeapplication.viewModel.ProfileUiState
 import com.example.underbigtreeapplication.viewModel.ProfileViewModel
 import com.example.underbigtreeapplication.viewModel.ProfileViewModelFactory
+import com.example.underbigtreeapplication.viewModel.RewardViewModel
 import com.example.underbigtreeapplication.viewModel.StaffViewModel
 import com.example.underbigtreeapplication.viewModel.StaffViewModelFactory
 import com.google.firebase.auth.FirebaseAuth
@@ -62,6 +63,7 @@ fun NavigationFlow(navController: NavHostController) {
         else -> "login"
     }
     val cartViewModel: CartViewModel = viewModel()
+    val rewardViewModel: RewardViewModel = viewModel()
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable("login") {
@@ -155,6 +157,7 @@ fun NavigationFlow(navController: NavHostController) {
             )
         }
 
+
         composable ("custProfile"){
             val context = LocalContext.current
             val database = AppDatabase.getDatabase(context)
@@ -199,8 +202,9 @@ fun NavigationFlow(navController: NavHostController) {
 
         composable("point") {
             RewardsScreen(
+                viewModel = rewardViewModel,
                 onBackClick = { navController.popBackStack() },
-                onRedeemClick={}
+                onRedeemClick={navController.navigate("orderSummaryScreen")}
             )
         }
 
@@ -223,6 +227,7 @@ fun NavigationFlow(navController: NavHostController) {
             )
             OrderSummaryScreen(
                 viewModel = summaryViewModel,
+                rewardViewModel = rewardViewModel,
                 navController,
                 onBackClick = { navController.popBackStack() },
             )
@@ -244,11 +249,14 @@ fun NavigationFlow(navController: NavHostController) {
             val summaryViewModel: OrderSummaryViewModel = viewModel(
                 factory = OrderSummaryViewModelFactory(cartViewModel)
             )
+
             TngPaymentSuccess(
                 totalAmount = totalAmount,
                 summaryViewModel = summaryViewModel,
-                onReturnClick = {
-                    navController.navigate("home")
+                onReturnClick = { earnedPoints ->
+                    navController.navigate("home") {
+                        popUpTo("tngSuccess/{totalAmount}") { inclusive = true }
+                    }
                 }
             )
         }
