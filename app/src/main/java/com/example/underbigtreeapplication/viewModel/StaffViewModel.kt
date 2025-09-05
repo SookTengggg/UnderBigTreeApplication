@@ -47,8 +47,15 @@ class StaffViewModel(private val repository: MenuRepository) : ViewModel() {
     }
 
     suspend fun getAddOnById(id: String): AddOnEntity? {
-        return addonCollection.document(id).get().await().toObject(AddOnEntity::class.java)
+        return try {
+            val snapshot = addonCollection.document(id).get().await()
+            snapshot.toObject(AddOnEntity::class.java)
+        } catch (e: Exception) {
+            Log.e("StaffVM", "Error fetching AddOn by id: $id", e)
+            null
+        }
     }
+
 
     fun updateMenu(menu: MenuEntity) {
         menuCollection.document(menu.id)

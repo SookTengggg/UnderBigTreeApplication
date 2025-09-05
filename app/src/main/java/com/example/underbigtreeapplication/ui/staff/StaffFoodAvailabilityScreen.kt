@@ -1,5 +1,6 @@
 package com.example.underbigtreeapplication.ui.staff
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -17,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,6 +28,10 @@ import com.example.underbigtreeapplication.model.AddOnEntity
 import com.example.underbigtreeapplication.model.MenuEntity
 import com.example.underbigtreeapplication.model.OptionItem
 import com.example.underbigtreeapplication.model.SauceEntity
+import com.example.underbigtreeapplication.ui.SideNavigationBar
+import com.example.underbigtreeapplication.ui.profile.StaffBottomNavigation
+import com.example.underbigtreeapplication.ui.profile.StaffSideNavigationBar
+import com.example.underbigtreeapplication.ui.profile.staffNavItems
 import com.example.underbigtreeapplication.viewModel.StaffViewModel
 
 @Composable
@@ -38,51 +44,121 @@ fun StaffFoodAvailabilityScreen(
     val sauce by staffViewModel.sauces.collectAsState()
     val addon by staffViewModel.addons.collectAsState()
 
-    Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().padding(32.dp)) {
-            Text(
-                text = "Food Availability",
-                fontSize = 20.sp,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "* Click button to toggle available or unavailable",
-                fontSize = 12.sp,
-                color = Color.Gray,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp
+    val isTablet = screenWidthDp >= 600
+    var selectedItem by remember { mutableStateOf("staffAvailability") }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize().padding(bottom = 100.dp)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        if (isTablet) {
+            StaffSideNavigationBar(
+                items = staffNavItems,
+                selected = selectedItem,
+                navController = navController,
+                onItemSelected = { newSelection -> selectedItem = newSelection }
             ) {
-                items(menuList) { menu ->
-                    FoodAvailabilityCard(menu = menu, onToggle = {
-                        staffViewModel.updateMenuAvailability(menu.id, !menu.availability)
-                    })
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .background(Color.White)
+                ) {
+                    Text(
+                        text = "Food Availability",
+                        fontSize = 20.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "* Click button to toggle available or unavailable",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(menuList) { menu ->
+                            FoodAvailabilityCard(menu = menu) {
+                                staffViewModel.updateMenuAvailability(menu.id, !menu.availability)
+                            }
+                        }
+                        items(sauce) { s ->
+                            SauceAvailabilityCard(sauce = s) {
+                                staffViewModel.updateSauceAvailability(s.id, !s.availability)
+                            }
+                        }
+                        items(addon) { a ->
+                            AddOnAvailabilityCard(addon = a) {
+                                staffViewModel.updateAddOnAvailability(a.id, !a.availability)
+                            }
+                        }
+                    }
                 }
-                items(sauce) { sauce ->
-                    SauceAvailabilityCard(sauce = sauce, onToggle = {
-                        staffViewModel.updateSauceAvailability(sauce.id, !sauce.availability)
-                    })
+            }
+        } else {
+            Scaffold(
+                containerColor = Color.White,
+                bottomBar = {
+                    StaffBottomNavigation(
+                        items = staffNavItems,
+                        navController = navController
+                    )
                 }
-                items(addon) { addon ->
-                    AddOnAvailabilityCard(addon = addon, onToggle = {
-                        staffViewModel.updateAddOnAvailability(addon.id, !addon.availability)
-                    })
+            ) { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(16.dp)
+                        .background(Color.White)
+                ) {
+                    Text(
+                        text = "Food Availability",
+                        fontSize = 20.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "* Click button to toggle available or unavailable",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(menuList) { menu ->
+                            FoodAvailabilityCard(menu = menu) {
+                                staffViewModel.updateMenuAvailability(menu.id, !menu.availability)
+                            }
+                        }
+                        items(sauce) { s ->
+                            SauceAvailabilityCard(sauce = s) {
+                                staffViewModel.updateSauceAvailability(s.id, !s.availability)
+                            }
+                        }
+                        items(addon) { a ->
+                            AddOnAvailabilityCard(addon = a) {
+                                staffViewModel.updateAddOnAvailability(a.id, !a.availability)
+                            }
+                        }
+                    }
                 }
             }
         }
-
-        StaffBottomNavigation(
-            items = staffNavItems,
-            navController = navController,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
     }
 }
 
@@ -91,7 +167,7 @@ fun FoodAvailabilityCard(menu: MenuEntity, onToggle: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(250.dp),
+            .height(230.dp),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFEFEFEF),
@@ -99,31 +175,32 @@ fun FoodAvailabilityCard(menu: MenuEntity, onToggle: () -> Unit) {
         ),
         shape = RoundedCornerShape(8.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp).height(IntrinsicSize.Min),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            AsyncImage(
-                model = menu.imageRes,
-                contentDescription = menu.name,
-                modifier = Modifier.size(120.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(menu.name, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Button(
-                onClick = { onToggle() },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (menu.availability) Color.Gray else Color.Red
-                )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(
-                    if (menu.availability) "Available" else "Unavailable",
-                    color = Color.White,
-                    fontSize = 12.sp, fontWeight = FontWeight.Bold
+                AsyncImage(
+                    model = menu.imageRes,
+                    contentDescription = menu.name,
+                    modifier = Modifier.size(120.dp)
                 )
+                Text(menu.name, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Button(
+                    onClick = { onToggle() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (menu.availability) Color.Gray else Color.Red
+                    )
+                ) {
+                    Text(
+                        if (menu.availability) "Available" else "Unavailable",
+                        color = Color.White,
+                        fontSize = 12.sp, fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
@@ -133,7 +210,7 @@ fun SauceAvailabilityCard(sauce: SauceEntity, onToggle: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(250.dp),
+            .height(230.dp),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFEFEFEF),
@@ -176,7 +253,7 @@ fun AddOnAvailabilityCard(addon: AddOnEntity, onToggle: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(250.dp),
+            .height(230.dp),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFEFEFEF),

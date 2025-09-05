@@ -242,7 +242,7 @@ fun StaffBottomNavigation(items: List<StaffNavItem>, navController: NavControlle
 fun StaffSideNavigationBar(items: List<StaffNavItem>, selected: String, navController: NavController, onItemSelected: (String) -> Unit, content: @Composable () -> Unit) {
     PermanentNavigationDrawer(
         drawerContent = {
-            PermanentDrawerSheet (modifier = Modifier.width(150.dp)) {
+            PermanentDrawerSheet (modifier = Modifier.width(150.dp).background(Color.White), drawerContainerColor = Color.White) {
                 items.forEach { item ->
                     NavigationDrawerItem(
                         label = { Text(item.label) },
@@ -266,6 +266,7 @@ fun StaffSideNavigationBar(items: List<StaffNavItem>, selected: String, navContr
         Box(
             modifier = Modifier
                 .fillMaxHeight()
+                .background(Color.White)
         ) {
             content()
         }

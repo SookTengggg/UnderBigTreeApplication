@@ -1,9 +1,16 @@
 package com.example.underbigtreeapplication.navigation
 
 import android.content.Context
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -15,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.underbigtreeapplication.data.local.AppDatabase
+import com.example.underbigtreeapplication.model.AddOnEntity
 import com.example.underbigtreeapplication.model.MenuEntity
 import com.example.underbigtreeapplication.repository.MenuRepository
 import com.example.underbigtreeapplication.repository.ProfileRepository
@@ -38,9 +46,11 @@ import com.example.underbigtreeapplication.ui.staff.StaffAddDrinkScreen
 import com.example.underbigtreeapplication.ui.staff.StaffAddFoodScreen
 import com.example.underbigtreeapplication.ui.staff.StaffAddOnScreen
 import com.example.underbigtreeapplication.ui.staff.StaffAddSauceScreen
+import com.example.underbigtreeapplication.ui.staff.StaffEditAddOnScreen
 import com.example.underbigtreeapplication.ui.staff.StaffFoodAvailabilityScreen
 import com.example.underbigtreeapplication.ui.staff.StaffFoodMenuScreen
 import com.example.underbigtreeapplication.ui.staff.StaffWelcomeScreen
+import com.example.underbigtreeapplication.ui.staffActivity.StaffActivityScreen
 import com.example.underbigtreeapplication.ui.welcomePage.WelcomeScreen
 import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModel
@@ -51,6 +61,7 @@ import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModelFactor
 import com.example.underbigtreeapplication.viewModel.ProfileUiState
 import com.example.underbigtreeapplication.viewModel.ProfileViewModel
 import com.example.underbigtreeapplication.viewModel.ProfileViewModelFactory
+import com.example.underbigtreeapplication.viewModel.StaffActivityViewModel
 import com.example.underbigtreeapplication.viewModel.StaffViewModel
 import com.example.underbigtreeapplication.viewModel.StaffViewModelFactory
 import com.google.firebase.auth.FirebaseAuth
@@ -127,8 +138,8 @@ fun NavigationFlow(navController: NavHostController) {
                         popUpTo("staffHome") { inclusive = true }
                     }
                 }, onContinue = {
-                    navController.navigate("staffFood"){
-                        popUpTo("staffHome"){ inclusive = true }
+                    navController.navigate("staffFood") {
+                        popUpTo("staffHome") { inclusive = true }
                     }
                 }
             )
@@ -189,33 +200,85 @@ fun NavigationFlow(navController: NavHostController) {
         composable("addSauce") {
             StaffAddSauceScreen(
                 navController = navController,
-                staffViewModel = viewModel(factory = StaffViewModelFactory(MenuRepository(AppDatabase.getDatabase(context))))
+                staffViewModel = viewModel(
+                    factory = StaffViewModelFactory(
+                        MenuRepository(
+                            AppDatabase.getDatabase(context)
+                        )
+                    )
+                )
             )
         }
 
         composable("addAddOn") {
             StaffAddOnScreen(
                 navController = navController,
-                staffViewModel = viewModel(factory = StaffViewModelFactory(MenuRepository(AppDatabase.getDatabase(context))))
+                staffViewModel = viewModel(
+                    factory = StaffViewModelFactory(
+                        MenuRepository(
+                            AppDatabase.getDatabase(context)
+                        )
+                    )
+                )
             )
         }
 
         composable(
-            route = "foodEdit/{foodId}/{foodType}",
-            arguments = listOf(
-                navArgument("foodId") { type = NavType.StringType },
-                navArgument("foodType") { type = NavType.StringType }
-            )
+            route = "editAddOnMenu/{addOnId}",
+            arguments = listOf(navArgument("addOnId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
-            val foodType = backStackEntry.arguments?.getString("foodType") ?: "menu"
-            val staffViewModel: StaffViewModel = viewModel()
+
+            // 1️⃣ Get the addOnId from backStackEntry
+            val addOnId = backStackEntry.arguments?.getString("addOnId") ?: ""
+
+            // 2️⃣ Create or get the ViewModel instance
+            val staffViewModel: StaffViewModel = viewModel(
+                factory = StaffViewModelFactory(MenuRepository(AppDatabase.getDatabase(LocalContext.current)))
+            )
+
+            // 3️⃣ Remember a state for the Add-On being loaded
+            var addOn by remember { mutableStateOf<AddOnEntity?>(null) }
+
+            // 4️⃣ Load the Add-On asynchronously (suspend function)
+            LaunchedEffect(addOnId) {
+                addOn = staffViewModel.getAddOnById(addOnId)
+            }
+
+            // 5️⃣ Show the edit screen once loaded
+            if (addOn != null) {
+                StaffEditAddOnScreen(
+                    navController = navController,
+                    staffViewModel = staffViewModel,
+                    addOn = addOn!!
+                )
+            } else {
+                // Optional: loading indicator while fetching Add-On
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
+
+        composable(
+            route = "edit"
+//            arguments = listOf(
+//                navArgument("foodId") { type = NavType.StringType },
+//                navArgument("foodType") { type = NavType.StringType }
+//            )
+        ) {
+//        backStackEntry ->
+//            val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
+//            val foodType = backStackEntry.arguments?.getString("foodType") ?: "menu"
+//            val staffViewModel: StaffViewModel = viewModel()
 
             FoodEditScreen(
                 navController = navController,
-                foodId = foodId,
-                foodType = foodType,
-                staffViewModel = staffViewModel
+//                foodId = foodId,
+//                foodType = foodType,
+//                staffViewModel = staffViewModel
             )
         }
 
@@ -231,6 +294,14 @@ fun NavigationFlow(navController: NavHostController) {
                 viewModel = viewModel,
                 navController = navController,
                 cartViewModel = cartViewModel
+            )
+        }
+
+        composable("staffActivity"){
+            val staffViewModel: StaffActivityViewModel = viewModel ()
+            StaffActivityScreen(
+                navController = navController,
+                viewModel = staffViewModel
             )
         }
 

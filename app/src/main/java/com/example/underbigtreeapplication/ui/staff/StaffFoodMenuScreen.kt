@@ -1,5 +1,6 @@
 package com.example.underbigtreeapplication.ui.staff
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -30,13 +31,19 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import coil.compose.AsyncImage
 import com.example.underbigtreeapplication.model.MenuEntity
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.underbigtreeapplication.model.AddOnEntity
 import com.example.underbigtreeapplication.model.SauceEntity
 import com.example.underbigtreeapplication.ui.customerHomePage.MenuCard
+import com.example.underbigtreeapplication.ui.profile.StaffBottomNavigation
+import com.example.underbigtreeapplication.ui.profile.StaffSideNavigationBar
+import com.example.underbigtreeapplication.ui.profile.staffNavItems
 import com.example.underbigtreeapplication.viewModel.StaffViewModel
 import com.example.underbigtreeapplication.viewModel.StaffViewModelFactory
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 
 data class NavItem(
@@ -45,59 +52,100 @@ data class NavItem(
     val route: String
 )
 
-val staffNavItems = listOf(
-    NavItem(Icons.Filled.Home, "Home", "staffActivity"),
-    NavItem(Icons.Filled.Edit, "Edit", "staffAvailability"),
-    NavItem(Icons.Filled.Menu, "Activity","staffFood"),
-    NavItem(Icons.Filled.Person, "Profile", "staffProfile")
-)
-
 @Composable
-fun StaffFoodMenuScreen(navController: NavController, staffViewModel: StaffViewModel, onMenuClick: (MenuEntity) -> Unit) {
+fun StaffFoodMenuScreen(
+    navController: NavController,
+    staffViewModel: StaffViewModel,
+    onMenuClick: (MenuEntity) -> Unit
+) {
     val menuList by staffViewModel.menus.collectAsState()
     val addon by staffViewModel.addons.collectAsState()
     var showChooseScreen by remember { mutableStateOf(false) }
 
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp
+    val isTablet = screenWidthDp >= 600
+    var selectedItem by remember { mutableStateOf("staffFood") }
+
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().padding(32.dp)) {
-            Text(
-                text = "Menu",
-                fontSize = 20.sp,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize().padding(bottom = 100.dp)
+        if (isTablet) {
+            StaffSideNavigationBar(
+                items = staffNavItems,
+                selected = selectedItem,
+                navController = navController,
+                onItemSelected = { newSelection -> selectedItem = newSelection },
             ) {
-                item {
-                    AddMenuCard(onClick = { showChooseScreen = true })
-                }
-                items(menuList) { menu ->
-                    StaffMenuCard(menu) { selectedMenu ->
-                        navController.navigate("foodEdit/${selectedMenu.id}/menu")
-                    }
-                }
-                items(addon) { addon ->
-                    StaffAddOnCard(addon) { selectedAddOn ->
-                        navController.navigate("foodEdit/${selectedAddOn.id}/addon")
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Menu",
+                        fontSize = 20.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        item { AddMenuCard { showChooseScreen = true } }
+                        items(menuList) { menu -> StaffMenuCard(menu) { onMenuClick(menu) } }
+                        items(addon) { add ->
+                            StaffAddOnCard(add) { selectedAddOn ->
+                                navController.navigate("editAddOnMenu/${selectedAddOn.id}")
+                            }
+                        }
                     }
                 }
             }
-        }
-        StaffBottomNavigation(
-            items = staffNavItems,
-            navController = navController,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
-        if (showChooseScreen) {
-            StaffChooseScreen(
-                navController = navController,
-                staffViewModel = staffViewModel,
-                onDismiss = { showChooseScreen = false }
-            )
+        } else {
+            Scaffold(
+                containerColor = Color.White,
+                bottomBar = {
+                    StaffBottomNavigation(
+                        items = staffNavItems,
+                        navController = navController
+                    )
+                },
+            ) { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Menu",
+                        fontSize = 20.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        item { AddMenuCard { showChooseScreen = true } }
+                        items(menuList) { menu -> StaffMenuCard(menu) { onMenuClick(menu) } }
+                        items(addon) { add ->
+                            StaffAddOnCard(add) { selectedAddOn ->
+                                navController.navigate("editAddOnMenu/${selectedAddOn.id}")
+                            }
+                        }
+                    }
+                }
+
+                if (showChooseScreen) {
+                    StaffChooseScreen(
+                        navController = navController,
+                        staffViewModel = staffViewModel,
+                        onDismiss = { showChooseScreen = false }
+                    )
+                }
+            }
         }
     }
 }
@@ -105,7 +153,7 @@ fun StaffFoodMenuScreen(navController: NavController, staffViewModel: StaffViewM
 @Composable
 fun AddMenuCard(onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().height(250.dp).clickable { onClick() },
+        modifier = Modifier.fillMaxWidth().height(230.dp).clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F2F2)),
         shape = RoundedCornerShape(8.dp)
     ) {
@@ -121,44 +169,53 @@ fun AddMenuCard(onClick: () -> Unit) {
 }
 
 @Composable
-fun StaffMenuCard(item: MenuEntity, onClick: (MenuEntity) -> Unit){
+fun StaffMenuCard(item: MenuEntity, onClick: (MenuEntity) -> Unit) {
     val isAvailable = item.availability
 
     Card(
-        modifier = Modifier.fillMaxWidth().height(250.dp)
-            .then(
-                if (isAvailable) Modifier.clickable { onClick(item) }
-                else Modifier
-            ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(230.dp)
+            .then(if (isAvailable) Modifier.clickable { onClick(item) } else Modifier),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFEFEFEF),
             contentColor = Color.Black
         )
-    ){
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp).height(IntrinsicSize.Min),
-            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center){
-            if(!isAvailable){
-                Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(modifier = Modifier.fillMaxSize().padding(6.dp)){
+                if (!isAvailable) {
                     Text(
-                        text = "*Unavailable", color = Color.Red, fontWeight = FontWeight.SemiBold, fontSize = 10.sp
+                        text = "*Unavailable",
+                        color = Color.Red,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(top = 4.dp)
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(if (!isAvailable) 8.dp else 0.dp))
             Column(
-                modifier = Modifier.alpha(if (isAvailable) 1f else 0.3f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ){
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(if (isAvailable) 1f else 0.3f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
                 AsyncImage(
                     model = item.imageRes,
                     contentDescription = item.name,
                     modifier = Modifier.size(120.dp)
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     item.name,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 4.dp)
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
                 )
                 Text("RM %.2f".format(item.price))
             }
@@ -167,11 +224,11 @@ fun StaffMenuCard(item: MenuEntity, onClick: (MenuEntity) -> Unit){
 }
 
 @Composable
-fun StaffAddOnCard(item: AddOnEntity, onClick: (AddOnEntity) -> Unit){
+fun StaffAddOnCard(item: AddOnEntity, onClick: (AddOnEntity) -> Unit) {
     val isAvailable = item.availability
 
     Card(
-        modifier = Modifier.fillMaxWidth().height(250.dp)
+        modifier = Modifier.fillMaxWidth().height(230.dp)
             .then(
                 if (isAvailable) Modifier.clickable { onClick(item) }
                 else Modifier
@@ -181,23 +238,31 @@ fun StaffAddOnCard(item: AddOnEntity, onClick: (AddOnEntity) -> Unit){
             containerColor = Color(0xFFEFEFEF),
             contentColor = Color.Black
         )
-    ){
+    ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
         {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(16.dp).height(IntrinsicSize.Min),
-                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center){
-                if(!isAvailable){
-                    Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                if (!isAvailable) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
                         Text(
-                            text = "*Unavailable", color = Color.Red, fontWeight = FontWeight.SemiBold, fontSize = 10.sp
+                            text = "*Unavailable",
+                            color = Color.Red,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 10.sp
                         )
                     }
                 }
                 Column(
                     modifier = Modifier.alpha(if (isAvailable) 1f else 0.3f),
                     horizontalAlignment = Alignment.CenterHorizontally
-                ){
+                ) {
                     Text(
                         item.name,
                         fontWeight = FontWeight.Bold,
@@ -206,29 +271,6 @@ fun StaffAddOnCard(item: AddOnEntity, onClick: (AddOnEntity) -> Unit){
                     Text("RM %.2f".format(item.price))
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun StaffBottomNavigation(items: List<NavItem>, navController: NavController, modifier: Modifier = Modifier) {
-    val currentDestination = navController.currentBackStackEntryAsState().value?.destination?.route
-
-    NavigationBar(modifier = modifier.fillMaxWidth(), containerColor = Color.White) {
-        items.forEach { item ->
-            val selected = currentDestination == item.route
-            NavigationBarItem(
-                selected = selected, onClick = {
-                    if (currentDestination != item.route) {
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                },
-                icon = { Icon(item.icon, contentDescription = item.label) }
-            )
         }
     }
 }
