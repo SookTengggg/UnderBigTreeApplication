@@ -5,7 +5,7 @@ data class Payment(
     val orderIds: List<String> = emptyList(),
     val totalPrice: Double = 0.0,
     val paymentMethod: String = "",
-    val transactionDate: String = "",
+    val transactionDate: Long = System.currentTimeMillis(),
     val phone: String = "",
     val userId: String = ""
 )

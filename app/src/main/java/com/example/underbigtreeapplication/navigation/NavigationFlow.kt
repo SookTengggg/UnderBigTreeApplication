@@ -18,6 +18,7 @@ import com.example.underbigtreeapplication.data.local.AppDatabase
 import com.example.underbigtreeapplication.model.MenuEntity
 import com.example.underbigtreeapplication.repository.MenuRepository
 import com.example.underbigtreeapplication.repository.ProfileRepository
+import com.example.underbigtreeapplication.ui.customerActivity.CustActivityScreen
 import com.example.underbigtreeapplication.ui.customerHomePage.CustHomeScreen
 import com.example.underbigtreeapplication.ui.loginPage.LoginScreen
 import com.example.underbigtreeapplication.ui.order.OrderScreen
@@ -38,6 +39,7 @@ import com.example.underbigtreeapplication.ui.welcomePage.WelcomeScreen
 import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModelFactory
+import com.example.underbigtreeapplication.viewModel.CustomerActivityViewModel
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModelFactory
 import com.example.underbigtreeapplication.viewModel.ProfileUiState
@@ -152,6 +154,14 @@ fun NavigationFlow(navController: NavHostController) {
                 viewModel = viewModel,
                 navController = navController,
                 cartViewModel = cartViewModel
+            )
+        }
+
+        composable ("custActivity"){
+            val viewModel: CustomerActivityViewModel = viewModel()
+            CustActivityScreen(
+                navController = navController,
+                viewModel = viewModel
             )
         }
 
