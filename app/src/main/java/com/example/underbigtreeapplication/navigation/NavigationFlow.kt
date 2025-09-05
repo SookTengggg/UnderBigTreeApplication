@@ -33,6 +33,11 @@ import com.example.underbigtreeapplication.ui.pointPage.RewardsScreen
 import com.example.underbigtreeapplication.ui.profile.StaffEditProfileScreen
 import com.example.underbigtreeapplication.ui.profile.StaffProfileScreen
 import com.example.underbigtreeapplication.ui.signupPage.SignupScreen
+import com.example.underbigtreeapplication.ui.staff.StaffAddDrinkScreen
+import com.example.underbigtreeapplication.ui.staff.StaffAddFoodScreen
+import com.example.underbigtreeapplication.ui.staff.StaffAddOnScreen
+import com.example.underbigtreeapplication.ui.staff.StaffAddSauceScreen
+import com.example.underbigtreeapplication.ui.staff.StaffFoodAvailabilityScreen
 import com.example.underbigtreeapplication.ui.staff.StaffFoodMenuScreen
 import com.example.underbigtreeapplication.ui.staff.StaffWelcomeScreen
 import com.example.underbigtreeapplication.ui.welcomePage.WelcomeScreen
@@ -137,8 +142,60 @@ fun NavigationFlow(navController: NavHostController) {
             StaffFoodMenuScreen(
                 navController = navController,
                 staffViewModel = staffViewModel,
-                onAddMenu = { navController.navigate("addMenu") },
                 onMenuClick = { menuItem -> navController.navigate("editMenu/${menuItem.id}") }
+            )
+        }
+
+        composable("staffAvailability") {
+            val database = AppDatabase.getDatabase(context)
+            val repository = MenuRepository(database)
+            val staffViewModel: StaffViewModel = viewModel(
+                factory = StaffViewModelFactory(repository)
+            )
+            StaffFoodAvailabilityScreen(
+                navController = navController,
+                staffViewModel = staffViewModel,
+                onMenuClick = { menuItem -> navController.navigate("editMenu/${menuItem.id}") }
+            )
+        }
+
+        composable("addFood") {
+            StaffAddFoodScreen(
+                navController = navController,
+                staffViewModel = viewModel(
+                    factory = StaffViewModelFactory(
+                        MenuRepository(
+                            AppDatabase.getDatabase(context)
+                        )
+                    )
+                )
+            )
+        }
+
+        composable("addDrink") {
+            StaffAddDrinkScreen(
+                navController = navController,
+                staffViewModel = viewModel(
+                    factory = StaffViewModelFactory(
+                        MenuRepository(
+                            AppDatabase.getDatabase(context)
+                        )
+                    )
+                )
+            )
+        }
+
+        composable("addSauce") {
+            StaffAddSauceScreen(
+                navController = navController,
+                staffViewModel = viewModel(factory = StaffViewModelFactory(MenuRepository(AppDatabase.getDatabase(context))))
+            )
+        }
+
+        composable("addAddOn") {
+            StaffAddOnScreen(
+                navController = navController,
+                staffViewModel = viewModel(factory = StaffViewModelFactory(MenuRepository(AppDatabase.getDatabase(context))))
             )
         }
 

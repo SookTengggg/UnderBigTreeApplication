@@ -55,8 +55,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import coil.compose.AsyncImage
 import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.repository.Profile
-import com.example.underbigtreeapplication.ui.SideNavigationBar
-import com.example.underbigtreeapplication.ui.customerHomePage.NavItem
 import com.example.underbigtreeapplication.viewModel.ProfileUiState
 import com.example.underbigtreeapplication.viewModel.ProfileViewModel
 import com.example.underbigtreeapplication.viewModel.ProfileViewModelFactory
@@ -68,9 +66,9 @@ data class StaffNavItem(
 )
 
 val staffNavItems = listOf(
-    StaffNavItem(Icons.Filled.Home, "Home", "staffFood"),
-    StaffNavItem(Icons.Filled.Edit, "Edit", "staffEditProfile"),
-    StaffNavItem(Icons.Filled.Menu, "Activity","staffActivityScreen"),
+    StaffNavItem(Icons.Filled.Home, "Home", "staffActivity"),
+    StaffNavItem(Icons.Filled.Edit, "Edit", "staffAvailability"),
+    StaffNavItem(Icons.Filled.Menu, "Activity","staffFood"),
     StaffNavItem(Icons.Filled.Person, "Profile", "staffProfile")
 )
 
