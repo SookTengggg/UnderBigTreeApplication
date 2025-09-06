@@ -46,31 +46,4 @@ class RewardViewModel : ViewModel() {
                 _rewards.value = emptyList()
             }
     }
-
-    private var rewardCounter = 1
-
-    private fun generateRewardId(): String {
-        return "R" + rewardCounter.toString().padStart(4, '0')
-    }
-
-    private val _selectedReward = MutableLiveData<RewardItem?>()
-    val selectedReward: LiveData<RewardItem?> = _selectedReward
-
-    fun selectReward(reward: RewardItem) {
-        _selectedReward.value = reward
-    }
-
-    private val _redeemedRewards = MutableLiveData<List<RewardItem>>(emptyList())
-    val redeemedRewards: LiveData<List<RewardItem>> = _redeemedRewards
-
-    fun redeemSelectedReward() {
-        val reward = _selectedReward.value ?: return
-        val newReward = reward.copy(
-            id = generateRewardId(),
-            isRedeemed = true
-        )
-        _redeemedRewards.value = _redeemedRewards.value!! + newReward
-        rewardCounter++
-    }
-
 }

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -22,9 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,7 +40,6 @@ fun RewardsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .systemBarsPadding()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -63,15 +58,12 @@ fun RewardsScreen(
         Spacer(modifier = Modifier.height(20.dp))
         Text("Rewards", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-
         Text(
             "Points: 100",
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.align(Alignment.Start)
         )
-
-        var selectedRewardId by remember { mutableStateOf<String?>(null) }
 
         LazyColumn {
             items(rewardsList) { reward ->
@@ -84,8 +76,7 @@ fun RewardsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
                             Text(reward.name, fontWeight = FontWeight.Bold)
@@ -93,47 +84,21 @@ fun RewardsScreen(
                             Text(reward.condition, fontSize = 12.sp, color = Color.Gray)
                         }
                         RadioButton(
-                            selected = selectedRewardId == reward.id,
-                            onClick = {
-                                selectedRewardId = reward.id
-                                viewModel.selectReward(reward)
-                            }
+                            selected = false,
+                            onClick = { /* handle select */ }
                         )
                     }
                 }
             }
         }
 
-        var errorMessage by remember { mutableStateOf<String?>(null) }
         Button(
-            onClick = {
-                val reward = viewModel.selectedReward.value
-//                if (reward != null) {
-//                    if (currentPoints >= reward.pointsRequired) {
-//                        viewModel.redeemSelectedReward()
-//                        currentPoints -= reward.pointsRequired  // ✅ update the state
-//                        errorMessage = null
-//                        onRedeemClick()
-//                    } else {
-//                        errorMessage = "Points is not enough to redeem"
-//                    }
-//                }
-            },
+            onClick = { onRedeemClick()},
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp),
-            enabled = selectedRewardId != null
+                .padding(top = 16.dp)
         ) {
             Text("Redeem")
-        }
-
-        if (errorMessage != null) {
-            Text(
-                text = errorMessage!!,
-                color = Color.Red,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(top = 8.dp)
-            )
         }
     }
 }

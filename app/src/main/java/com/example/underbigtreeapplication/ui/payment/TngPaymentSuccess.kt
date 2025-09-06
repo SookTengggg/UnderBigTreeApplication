@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.utils.formatAmount
-import com.example.underbigtreeapplication.viewModel.CustHomeViewModel
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
 import com.example.underbigtreeapplication.viewModel.PaymentViewModel
 import kotlinx.coroutines.delay
@@ -44,7 +43,7 @@ fun TngPaymentSuccess(
     totalAmount: Double,
     viewModel: PaymentViewModel = viewModel(),
     summaryViewModel: OrderSummaryViewModel,
-    onReturnClick: (Int) -> Unit = {}
+    onReturnClick: () -> Unit = {},
 ) {
 
     var countdown by remember { mutableStateOf(3) }
@@ -60,8 +59,8 @@ fun TngPaymentSuccess(
             orderIds = currentOrderIds,
             totalAmount = totalAmount,
             method = "TNG",
-            onSuccess = { earnedPoints ->
-                onReturnClick(earnedPoints)
+            onSuccess = {
+                onReturnClick()
             }
         )
     }
@@ -136,4 +135,3 @@ fun TngPaymentSuccess(
         Spacer(modifier = Modifier.height(20.dp))
     }
 }
-
