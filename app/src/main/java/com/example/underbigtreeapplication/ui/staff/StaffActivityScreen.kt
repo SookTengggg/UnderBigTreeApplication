@@ -184,7 +184,8 @@ fun StaffActivityCard(
                         text = "${order.food.name} (User: ${group.payment.userId.take(6)})",
                         maxLines = 1,
                         fontSize = 14.sp,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        color = Color.Black
                     )
                 }
             }
