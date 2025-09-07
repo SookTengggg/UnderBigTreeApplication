@@ -1,4 +1,4 @@
-package com.example.underbigtreeapplication.ui.staffActivity
+package com.example.underbigtreeapplication.ui.staff
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,45 +39,30 @@ fun StaffActivityScreen(
 
     val screenWidthDp = LocalConfiguration.current.screenWidthDp
     val isTablet = screenWidthDp >= 600
-    var selectedItem by remember { mutableStateOf("staffActivityScreen") }
+    var selectedItem by remember { mutableStateOf("staffActivity") }
 
-    // Fetch data once
     LaunchedEffect(Unit) {
         viewModel.fetchAllPayments()
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
-        if (isTablet) {
-            StaffSideNavigationBar(
-                items = staffNavItems,
-                selected = selectedItem,
-                navController = navController,
-                onItemSelected = { newSelection -> selectedItem = newSelection }
-            ) {
-                Scaffold(
-                    topBar = { TopAppBar(title = { Text("Staff Activity") }) },
-                    containerColor = Color.White
-                ) { innerPadding ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                            .padding(16.dp)
-                    ) {
-                        StaffActivityContent(paymentsWithOrders, viewModel)
-                    }
-                }
-            }
-        } else {
+    if (isTablet) {
+        StaffSideNavigationBar(
+            items = staffNavItems,
+            selected = selectedItem,
+            navController = navController,
+            onItemSelected = { newSelection -> selectedItem = newSelection }
+        ) {
             Scaffold(
-                topBar = { TopAppBar(title = { Text("Staff Activity") }) },
-                bottomBar = {
-                    StaffBottomNavigation(
-                        items = staffNavItems,
-                        navController = navController
+                containerColor = Color.White,
+                topBar = {
+                    CenterAlignedTopAppBar(
+                        title = { Text("Staff Activity") },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color(0xFFF2F2F2),
+                            titleContentColor = Color.Black
+                        )
                     )
                 },
-                containerColor = Color.White
             ) { innerPadding ->
                 Box(
                     modifier = Modifier
@@ -87,6 +72,34 @@ fun StaffActivityScreen(
                 ) {
                     StaffActivityContent(paymentsWithOrders, viewModel)
                 }
+            }
+        }
+    } else {
+        Scaffold(
+            containerColor = Color.White,
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text("Staff Activity") },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFFF2F2F2),
+                        titleContentColor = Color.Black
+                    )
+                )
+            },
+            bottomBar = {
+                StaffBottomNavigation(
+                    items = staffNavItems,
+                    navController = navController
+                )
+            },
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp)
+            ) {
+                StaffActivityContent(paymentsWithOrders, viewModel)
             }
         }
     }
@@ -148,7 +161,8 @@ fun StaffActivityCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F2F2), contentColor = Color.Black)
     ) {
         Row(
             modifier = Modifier

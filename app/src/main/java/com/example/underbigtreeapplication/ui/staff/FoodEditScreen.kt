@@ -279,19 +279,19 @@ fun FoodEditScreen(
 }
 
 // Helper composable for text fields
-@Composable
-fun RequiredTextField(label: String, value: String, onValueChange: (String) -> Unit, showError: Boolean) {
-    Column {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            label = { Text(label) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            isError = showError
-        )
-        if (showError) {
-            Text("This field is required", color = Color.Red, fontSize = 12.sp)
-        }
-    }
-}
+//@Composable
+//fun RequiredTextField(label: String, value: String, onValueChange: (String) -> Unit, showError: Boolean) {
+//    Column {
+//        OutlinedTextField(
+//            value = value,
+//            onValueChange = onValueChange,
+//            label = { Text(label) },
+//            singleLine = true,
+//            modifier = Modifier.fillMaxWidth(),
+//            isError = showError
+//        )
+//        if (showError) {
+//            Text("This field is required", color = Color.Red, fontSize = 12.sp)
+//        }
+//    }
+//}

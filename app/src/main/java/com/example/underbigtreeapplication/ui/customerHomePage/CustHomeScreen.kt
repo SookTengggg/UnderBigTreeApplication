@@ -103,6 +103,7 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
     val isTablet = screenWidthDp >= 600
 
     Scaffold(
+        containerColor = Color.White,
         bottomBar = {
             if (!isTablet) {
                 BottomNavigation(

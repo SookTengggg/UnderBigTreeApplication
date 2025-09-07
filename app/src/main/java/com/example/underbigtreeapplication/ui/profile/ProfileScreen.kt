@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
@@ -82,8 +83,9 @@ fun ProfileScreen (navController: NavController, viewModel: ProfileViewModel) {
         }
     }
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxSize().background(Color.White),
+        contentAlignment = Alignment.Center,
+
     ) {
         if (isTablet) {
             SideNavigationBar(
@@ -96,17 +98,19 @@ fun ProfileScreen (navController: NavController, viewModel: ProfileViewModel) {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
+                        .background(Color.White)
                 ) {
                     ProfileContentWrapper(uiState, navController)
                 }
             }
         } else {
             Scaffold(
+                containerColor = Color.White,
                 bottomBar = {
                     BottomNavigation(items = navItems, navController = navController)
                 }
             ) { innerPadding ->
-                Box(Modifier.padding(innerPadding)) {
+                Box(Modifier.padding(innerPadding).background(Color.White)) {
                     ProfileContentWrapper(uiState, navController)
                 }
             }

@@ -30,9 +30,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
@@ -120,9 +124,13 @@ fun StaffEditProfileContent(profile: Profile, viewModel: ProfileViewModel, onBac
                 title = {Text("Edit Profile")},
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFF2F2F2),
+                    titleContentColor = Color.Black
+                )
             )
         }
     ){ innerPadding  ->
@@ -130,6 +138,7 @@ fun StaffEditProfileContent(profile: Profile, viewModel: ProfileViewModel, onBac
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(Color.White)
                 .verticalScroll(scrollState)
                 .padding(if (isTablet) 64.dp else 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -148,10 +157,13 @@ fun StaffEditProfileContent(profile: Profile, viewModel: ProfileViewModel, onBac
             OutlinedTextField(
                 value = phone,
                 onValueChange = { viewModel.phone.value = it },
-                label = { Text("Phone Number") },
+                label = { Text("Phone Number", color = Color(0xFF0D47A1)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                )
             )
 
             Spacer(modifier = Modifier.height(24.dp))

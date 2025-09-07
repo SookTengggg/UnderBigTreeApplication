@@ -67,14 +67,19 @@ fun StaffAddFoodScreen(
     }
 
     Scaffold(
+        containerColor = Color.White,
         topBar = {
             TopAppBar(
                 title = { Text("Add New Food") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFF2F2F2),
+                    titleContentColor = Color.Black
+                )
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -94,12 +99,22 @@ fun StaffAddFoodScreen(
                 FilterChip(
                     selected = !useLink,
                     onClick = { useLink = false },
-                    label = { Text("Upload Image") }
+                    label = { Text("Upload Image") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        labelColor = Color.Black,
+                        selectedContainerColor = Color(0xFFF2F2F2),
+                        selectedLabelColor = Color.Black
+                    )
                 )
                 FilterChip(
                     selected = useLink,
                     onClick = { useLink = true },
-                    label = { Text("Use Image Link") }
+                    label = { Text("Use Image Link") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        labelColor = Color.Black,
+                        selectedContainerColor = Color(0xFFF2F2F2),
+                        selectedLabelColor = Color.Black
+                    )
                 )
             }
 

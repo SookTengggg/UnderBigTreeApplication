@@ -100,6 +100,13 @@ fun StaffFoodMenuScreen(
                         }
                     }
                 }
+                if (showChooseScreen) {
+                    StaffChooseScreen(
+                        navController = navController,
+                        staffViewModel = staffViewModel,
+                        onDismiss = { showChooseScreen = false }
+                    )
+                }
             }
         } else {
             Scaffold(
