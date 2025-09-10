@@ -36,14 +36,19 @@ fun StaffAddSauceScreen(
     }
 
     Scaffold(
+        containerColor = Color.White,
         topBar = {
             TopAppBar(
                 title = { Text("Add New Sauce") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFF2F2F2),
+                    titleContentColor = Color.Black
+                )
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -55,7 +60,6 @@ fun StaffAddSauceScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Name
             RequiredTextField(
                 label = "Name",
                 value = name,
@@ -63,7 +67,6 @@ fun StaffAddSauceScreen(
                 showError = showError && name.isBlank()
             )
 
-            // Price
             RequiredTextField(
                 label = "Price (RM)",
                 value = price,

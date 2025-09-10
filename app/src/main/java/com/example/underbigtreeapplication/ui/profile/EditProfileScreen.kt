@@ -33,6 +33,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
@@ -78,7 +80,7 @@ fun EditProfileScreen(navController: NavController, viewModel: ProfileViewModel)
 
     when (uiState) {
         is ProfileUiState.Loading -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxSize().background(Color.White), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
@@ -86,7 +88,7 @@ fun EditProfileScreen(navController: NavController, viewModel: ProfileViewModel)
             Text(
                 text = (uiState as ProfileUiState.Error).message,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(16.dp).background(Color.White)
             )
         }
         is ProfileUiState.Success -> {
@@ -119,14 +121,22 @@ fun EditProfileContent(profile: Profile, viewModel: ProfileViewModel, onBackClic
     val scrollState = rememberScrollState()
 
     Scaffold (
+        containerColor = Color.White,
+        contentColor = Color.Black,
         topBar = {
             TopAppBar(
-                title = {Text("Edit Profile")},
+                title = {Text("Edit Profile", color = Color.Black)},
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFF2F2F2),
+                    titleContentColor = Color.Black,
+                    navigationIconContentColor = Color.Black,
+                    actionIconContentColor = Color.Black
+                )
             )
         }
     ){ innerPadding  ->
@@ -135,7 +145,8 @@ fun EditProfileContent(profile: Profile, viewModel: ProfileViewModel, onBackClic
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(scrollState)
-                .padding(if (isTablet) 64.dp else 24.dp),
+                .padding(if (isTablet) 64.dp else 24.dp)
+                .background(Color.White),
             horizontalAlignment = Alignment.CenterHorizontally
         ){
             AsyncImage(

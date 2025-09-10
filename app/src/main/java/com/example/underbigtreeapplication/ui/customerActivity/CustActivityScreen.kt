@@ -14,13 +14,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.AlertDialogDefaults.containerColor
+import androidx.compose.material3.BadgeDefaults.containerColor
+import androidx.compose.material3.BottomAppBarDefaults.containerColor
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButtonDefaults.containerColor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -71,8 +78,14 @@ fun CustActivityScreen(navController: NavController, viewModel: CustomerActivity
                 onItemSelected = { newSelection -> selectedItem = newSelection }
             ) {
                 Scaffold(
+                    containerColor = Color.White,
                     topBar = {
-                        TopAppBar(title = { Text("Activity") })
+                        CenterAlignedTopAppBar(title = { Text("Activity")},
+                            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                containerColor = Color.White,
+                                titleContentColor = Color.Black
+                            )
+                        )
                     }
                 ) { innerPadding ->
                     Box(
@@ -87,8 +100,14 @@ fun CustActivityScreen(navController: NavController, viewModel: CustomerActivity
             }
         } else {
             Scaffold(
+                containerColor = Color.White,
                 topBar = {
-                    TopAppBar(title = { Text("Activity") })
+                    CenterAlignedTopAppBar(title = { Text("Activity")},
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = Color(0xFFF2F2F2),
+                            titleContentColor = Color.Black
+                        )
+                    )
                 },
                 bottomBar = {
                     BottomNavigation(items = navItems, navController = navController)
@@ -164,7 +183,11 @@ fun ActivityCard(group: CustomerActivityViewModel.PaymentWithOrders, viewModel: 
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF2F2F2),
+            contentColor = Color.Black
+        )
     ) {
         Row(
             modifier = Modifier

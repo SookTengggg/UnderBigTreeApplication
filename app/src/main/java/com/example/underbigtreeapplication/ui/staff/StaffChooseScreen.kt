@@ -43,68 +43,62 @@ fun StaffChooseScreen(
     var selectedOption by remember { mutableStateOf<String?>(null) }
 
     Dialog(onDismissRequest = { onDismiss() }) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.5f)),
-            contentAlignment = Alignment.Center
+
+        Card(
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier.padding(16.dp)
         ) {
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                modifier = Modifier.padding(16.dp)
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("Add for...", fontSize = 18.sp)
-                    Spacer(Modifier.height(12.dp))
+                Text("Add for...", fontSize = 18.sp)
+                Spacer(Modifier.height(12.dp))
 
-                    // Radio options
-                    options.forEach { option ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { selectedOption = option }
-                                .padding(8.dp)
-                        ) {
-                            RadioButton(
-                                selected = selectedOption == option,
-                                onClick = { selectedOption = option }
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(option, fontSize = 14.sp)
-                        }
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-
+                // Radio options
+                options.forEach { option ->
                     Row(
-                        horizontalArrangement = Arrangement.End,
-                        modifier = Modifier.fillMaxWidth()
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selectedOption = option }
+                            .padding(8.dp)
                     ) {
-                        TextButton(onClick = { onDismiss() }) {
-                            Text("CANCEL")
-                        }
+                        RadioButton(
+                            selected = selectedOption == option,
+                            onClick = { selectedOption = option }
+                        )
                         Spacer(Modifier.width(8.dp))
-                        Button(
-                            onClick = {
-                                selectedOption?.let { option ->
-                                    when (option) {
-                                        "Food" -> navController.navigate("addFood")
-                                        "Drink" -> navController.navigate("addDrink")
-                                        "Sauce" -> navController.navigate("addSauce")
-                                        "Add On" -> navController.navigate("addAddOn")
-                                    }
-                                    onDismiss()
+                        Text(option, fontSize = 14.sp)
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    TextButton(onClick = { onDismiss() }) {
+                        Text("CANCEL")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            selectedOption?.let { option ->
+                                when (option) {
+                                    "Food" -> navController.navigate("addFood")
+                                    "Drink" -> navController.navigate("addDrink")
+                                    "Sauce" -> navController.navigate("addSauce")
+                                    "Add On" -> navController.navigate("addAddOn")
                                 }
-                            },
-                            enabled = selectedOption != null
-                        ) {
-                            Text("OK")
-                        }
+                                onDismiss()
+                            }
+                        },
+                        enabled = selectedOption != null
+                    ) {
+                        Text("OK")
                     }
                 }
             }

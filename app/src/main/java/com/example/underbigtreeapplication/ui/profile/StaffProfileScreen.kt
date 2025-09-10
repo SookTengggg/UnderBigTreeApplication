@@ -89,7 +89,7 @@ fun StaffProfileScreen (navController: NavController, viewModel: ProfileViewMode
         }
     }
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().background(Color.White),
         contentAlignment = Alignment.Center
     ) {
         if (isTablet) {
@@ -109,6 +109,7 @@ fun StaffProfileScreen (navController: NavController, viewModel: ProfileViewMode
             }
         } else {
             Scaffold(
+                containerColor = Color.White,
                 bottomBar = {
                     StaffBottomNavigation(
                         items = staffNavItems,
@@ -205,7 +206,7 @@ fun StaffProfileField(label: String, value: String){
         Text (
             text = label,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary
+            color = Color(0xFF0D47A1)
         )
 
         Text(
@@ -219,7 +220,7 @@ fun StaffProfileField(label: String, value: String){
 fun StaffBottomNavigation(items: List<StaffNavItem>, navController: NavController, modifier: Modifier = Modifier) {
     val currentDestination = navController.currentBackStackEntryAsState().value?.destination?.route
 
-    NavigationBar(modifier = modifier.fillMaxWidth(), containerColor = Color.White) {
+    NavigationBar(modifier = modifier.fillMaxWidth(), containerColor = Color(0xFFF2F2F2)) {
         items.forEach { item ->
             val selected = currentDestination == item.route
             NavigationBarItem(
@@ -242,7 +243,7 @@ fun StaffBottomNavigation(items: List<StaffNavItem>, navController: NavControlle
 fun StaffSideNavigationBar(items: List<StaffNavItem>, selected: String, navController: NavController, onItemSelected: (String) -> Unit, content: @Composable () -> Unit) {
     PermanentNavigationDrawer(
         drawerContent = {
-            PermanentDrawerSheet (modifier = Modifier.width(150.dp).background(Color.White), drawerContainerColor = Color.White) {
+            PermanentDrawerSheet (modifier = Modifier.width(150.dp).background(Color.White), drawerContainerColor = Color(0xFFF2F2F2)) {
                 items.forEach { item ->
                     NavigationDrawerItem(
                         label = { Text(item.label) },

@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.DrawerDefaults
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -39,7 +41,7 @@ fun BottomNavigation(items: List<NavItem>, navController: NavController, modifie
 
     NavigationBar (
         modifier = modifier.fillMaxWidth(),
-        containerColor = Color(0xFFEFEFEF),
+        containerColor = Color(0xFFF2F2F2),
         contentColor = Color.Black
     ) {
         items.forEach { item ->
@@ -71,7 +73,11 @@ fun BottomNavigation(items: List<NavItem>, navController: NavController, modifie
 fun SideNavigationBar(items: List<NavItem>, selected: String, navController: NavController, onItemSelected: (String) -> Unit, content: @Composable () -> Unit) {
     PermanentNavigationDrawer(
         drawerContent = {
-            PermanentDrawerSheet (modifier = Modifier.width(150.dp)) {
+            PermanentDrawerSheet(
+                modifier = Modifier.width(150.dp),
+                drawerContainerColor = Color.White,
+                drawerContentColor = Color.Black
+            ) {
                 items.forEach { item ->
                     NavigationDrawerItem(
                         label = { Text(item.label) },

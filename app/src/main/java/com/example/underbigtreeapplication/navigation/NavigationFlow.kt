@@ -50,7 +50,7 @@ import com.example.underbigtreeapplication.ui.staff.StaffEditAddOnScreen
 import com.example.underbigtreeapplication.ui.staff.StaffFoodAvailabilityScreen
 import com.example.underbigtreeapplication.ui.staff.StaffFoodMenuScreen
 import com.example.underbigtreeapplication.ui.staff.StaffWelcomeScreen
-import com.example.underbigtreeapplication.ui.staffActivity.StaffActivityScreen
+import com.example.underbigtreeapplication.ui.staff.StaffActivityScreen
 import com.example.underbigtreeapplication.ui.welcomePage.WelcomeScreen
 import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModel

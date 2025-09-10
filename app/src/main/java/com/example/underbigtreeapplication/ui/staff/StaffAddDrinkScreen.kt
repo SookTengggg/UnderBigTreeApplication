@@ -54,14 +54,20 @@ fun StaffAddDrinkScreen(
     }
 
     Scaffold(
+        containerColor = Color(0xFFF2F2F2),
+        contentColor = Color.Black,
         topBar = {
             TopAppBar(
                 title = { Text("Add New Drink") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFF2F2F2),
+                    titleContentColor = Color.Black
+                )
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -69,6 +75,7 @@ fun StaffAddDrinkScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color.White)
                 .padding(padding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -80,12 +87,22 @@ fun StaffAddDrinkScreen(
                 FilterChip(
                     selected = !useLink,
                     onClick = { useLink = false },
-                    label = { Text("Upload Image") }
+                    label = { Text("Upload Image") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        labelColor = Color.Black,
+                        selectedContainerColor = Color(0xFFF2F2F2),
+                        selectedLabelColor = Color.Black
+                    )
                 )
                 FilterChip(
                     selected = useLink,
                     onClick = { useLink = true },
-                    label = { Text("Use Image Link") }
+                    label = { Text("Use Image Link") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        labelColor = Color.Black,
+                        selectedContainerColor = Color(0xFFF2F2F2),
+                        selectedLabelColor = Color.Black
+                    )
                 )
             }
             if (useLink) {
