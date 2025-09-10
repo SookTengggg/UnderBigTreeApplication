@@ -26,7 +26,6 @@ class PaymentViewModel : ViewModel() {
     }
 
 
-
     fun storePayment(
         orderIds: List<String>,
         totalAmount: Double,
