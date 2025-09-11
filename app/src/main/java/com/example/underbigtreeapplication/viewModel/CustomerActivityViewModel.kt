@@ -19,7 +19,7 @@ class CustomerActivityViewModel: ViewModel() {
     private val userId = FirebaseAuth.getInstance().currentUser?.uid
     private val _paymentsWithOrders = MutableLiveData<List<PaymentWithOrders>>()
     val paymentsWithOrders: LiveData<List<PaymentWithOrders>> = _paymentsWithOrders
-    private val completedOrders = mutableSetOf<String>()
+    //private val completedOrders = mutableSetOf<String>()
 
     fun fetchUserPayments() {
         if (userId == null) return
@@ -64,17 +64,16 @@ class CustomerActivityViewModel: ViewModel() {
             .update("orderStatus", newStatus)
     }
 
-    fun updateOrdersToComplete(orderIds: List<String>) {
+    fun updateOrdersToReceive(orderIds: List<String>) {
         orderIds.forEach { orderId ->
-            updateOrderStatus(orderId, "completed")
-            completedOrders.add(orderId)
+            updateOrderStatus(orderId, "received")
         }
 
         val updatedList = _paymentsWithOrders.value?.map { pw ->
             pw.copy(
                 orders = pw.orders.map {order ->
-                    if (completedOrders.contains(order.orderId))
-                        order.copy(orderStatus = "completed")
+                    if (orderIds.contains(order.orderId))
+                        order.copy(orderStatus = "received")
                     else order
                 }
             )
@@ -82,9 +81,10 @@ class CustomerActivityViewModel: ViewModel() {
         _paymentsWithOrders.value = updatedList
     }
 
-    fun isOrderCompleted(orderId: String): Boolean {
-        return completedOrders.contains(orderId) || _paymentsWithOrders.value
-            ?.flatMap { it.orders }?. find { it.orderId == orderId }
-            ?.orderStatus == "completed"
+    fun isOrderReceived(orderId: String): Boolean {
+        return _paymentsWithOrders.value
+            ?.flatMap { it.orders }
+            ?. find { it.orderId == orderId }
+            ?.orderStatus == "received"
     }
 }

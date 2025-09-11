@@ -311,7 +311,7 @@ fun Points(points: Int, onClick: () -> Unit){
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 23.dp, end = 8.dp),
+            .padding(8.dp),
         contentAlignment = Alignment.CenterEnd
     ) {
         Button(onClick = onClick,
