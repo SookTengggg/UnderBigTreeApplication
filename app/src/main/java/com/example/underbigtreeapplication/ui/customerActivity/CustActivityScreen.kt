@@ -52,6 +52,7 @@ import com.example.underbigtreeapplication.ui.BottomNavigation
 import com.example.underbigtreeapplication.ui.SideNavigationBar
 import com.example.underbigtreeapplication.ui.customerHomePage.navItems
 import com.example.underbigtreeapplication.viewModel.CustomerActivityViewModel
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -129,7 +130,11 @@ private fun formatDate(timeStamp: Long): String {
 
 @Composable
 private fun ActivityContent(paymentWithOrders: List<CustomerActivityViewModel.PaymentWithOrders>, viewModel: CustomerActivityViewModel){
-    if (paymentWithOrders.isEmpty()){
+    val filteredPayments = paymentWithOrders.filter { pw ->
+        pw.orders.all { it.orderStatus == "completed" || it.orderStatus == "received"}
+    }
+
+    if (filteredPayments.isEmpty()){
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -154,7 +159,7 @@ private fun ActivityContent(paymentWithOrders: List<CustomerActivityViewModel.Pa
                 .fillMaxSize()
                 .padding(16.dp)
         ){
-            val grouped = paymentWithOrders.groupBy {
+            val grouped = filteredPayments.groupBy {
                 formatDate(it.payment.transactionDate)
             }
 
@@ -177,7 +182,25 @@ private fun ActivityContent(paymentWithOrders: List<CustomerActivityViewModel.Pa
 
 @Composable
 fun ActivityCard(group: CustomerActivityViewModel.PaymentWithOrders, viewModel: CustomerActivityViewModel) {
-    val allCompleted = group.orders.all { viewModel.isOrderCompleted(it.orderId) }
+    val allCompleted = group.orders.all { it.orderStatus == "completed" }
+    val allReceive = group.orders.all { it.orderStatus == "received" }
+    var countdown by remember { mutableStateOf(10) }
+    var autoTriggered by remember { mutableStateOf(false) }
+
+    LaunchedEffect(allCompleted, allReceive) {
+        if (allCompleted && !allReceive) {
+            countdown = 10
+            autoTriggered = false
+            while (countdown > 0) {
+                delay(1000)
+                countdown --
+            }
+            if (!autoTriggered){
+                viewModel.updateOrdersToReceive(group.orders.map { it.orderId })
+                autoTriggered = true
+            }
+        }
+    }
 
     Card(
         modifier = Modifier
@@ -216,21 +239,31 @@ fun ActivityCard(group: CustomerActivityViewModel.PaymentWithOrders, viewModel: 
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column(horizontalAlignment = Alignment.End){
+            Column(horizontalAlignment = Alignment.End) {
                 Text(text = "RM ${String.format("%.2f", group.payment.totalPrice)}")
 
-                if(!allCompleted){
-                        Button(
-                            onClick = {
-                                viewModel.updateOrdersToComplete(group.orders.map {it.orderId})
-                            },
-                            modifier = Modifier.padding(top = 8.dp)
-                        ) {
-                            Text("Order Receive")
-                        }
+                when {
+                    allCompleted && !allReceive -> {
+                       Button(
+                           onClick = {
+                               autoTriggered = true
+                               viewModel.updateOrdersToReceive((group.orders.map { it.orderId }))
+                           },
+                           modifier = Modifier.padding(8.dp)
+                       ) {
+                           Text ("Order Receive")
+                       }
+                    }
+                    allReceive -> {
+                        Text(
+                            text = "Received",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF4CAF50),
+                            modifier = Modifier.padding(8.dp)
+                        )
                     }
                 }
-
+            }
         }
     }
 }
