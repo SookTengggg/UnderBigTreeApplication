@@ -21,21 +21,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.underbigtreeapplication.model.RewardItem
 import com.example.underbigtreeapplication.viewModel.RewardViewModel
 
 @Composable
 fun RewardsScreen(
     onBackClick: () -> Unit = {},
-    onRedeemClick: () -> Unit = {},
+    onRedeemSuccess: () -> Unit,
     viewModel: RewardViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val rewardsList by viewModel.rewards.observeAsState(emptyList())
+    val userPoints by viewModel.userPoints.observeAsState(0)
+    val selectedReward by viewModel.selectedReward.observeAsState(null)
+
+    var message by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -59,7 +67,7 @@ fun RewardsScreen(
         Text("Rewards", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            "Points: 100",
+            "Points: $userPoints",
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.align(Alignment.Start)
@@ -84,8 +92,8 @@ fun RewardsScreen(
                             Text(reward.condition, fontSize = 12.sp, color = Color.Gray)
                         }
                         RadioButton(
-                            selected = false,
-                            onClick = { /* handle select */ }
+                            selected = selectedReward?.id == reward.id,
+                            onClick = { viewModel.selectReward(reward) }
                         )
                     }
                 }
@@ -93,12 +101,30 @@ fun RewardsScreen(
         }
 
         Button(
-            onClick = { onRedeemClick()},
+            onClick = {
+                viewModel.redeemSelectedReward { success, msg, reward ->
+                    if (success && reward != null) {
+                        viewModel.setRedeemedReward(reward)
+                        onRedeemSuccess()
+                        message = ""
+                    } else {
+                        message = msg
+                    }
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp)
         ) {
             Text("Redeem")
+        }
+
+        if (message.isNotEmpty()) {
+            Text(
+                text = message,
+                color = Color.Red,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }

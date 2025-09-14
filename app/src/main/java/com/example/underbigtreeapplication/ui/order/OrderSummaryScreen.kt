@@ -1,7 +1,6 @@
 package com.example.underbigtreeapplication.ui.order
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,42 +20,44 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.utils.formatAmount
-import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
-import com.example.underbigtreeapplication.viewModel.OrderViewModel
-import kotlin.toString
+import com.example.underbigtreeapplication.viewModel.RewardViewModel
 
 @Composable
 fun OrderSummaryScreen(
     viewModel: OrderSummaryViewModel,
+    rewardViewModel: RewardViewModel,
     navController: NavController,
     onBackClick: () -> Unit = {}
 ) {
     val orders by viewModel.orders.collectAsState()
+    val unpaidRewards by rewardViewModel.unpaidRewards.observeAsState(emptyList())
+
     val scrollState = rememberScrollState()
     var selectedPayment by remember { mutableStateOf("tng") }
 
     LaunchedEffect(Unit) {
         viewModel.fetchOrders()
+        rewardViewModel.fetchUnpaidRedeemedRewards()
     }
 
     val groupedOrders = orders.groupBy { it.food.id to it.takeAway }
@@ -153,8 +154,41 @@ fun OrderSummaryScreen(
                     }
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        if (unpaidRewards.isNotEmpty()) {
+            unpaidRewards.forEach { reward ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AsyncImage(
+                        model = R.drawable.reward_pic,
+                        contentDescription = reward.name,
+                        modifier = Modifier.size(80.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(reward.name, fontSize = 14.sp)
+                            Text("RM 0.00", fontSize = 14.sp)
+                        }
+
+                        Text("(Reward)", fontSize = 12.sp, color = Color.Gray)
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
             Divider(color = Color.LightGray, thickness = 1.dp)
             Row(
@@ -210,5 +244,4 @@ fun OrderSummaryScreen(
         }
 
         Spacer(modifier = Modifier.height(50.dp))
-    }
 }

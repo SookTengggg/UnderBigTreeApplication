@@ -41,13 +41,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,6 +76,8 @@ import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModel
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModelFactory
+import com.example.underbigtreeapplication.viewModel.RewardViewModel
+import kotlinx.coroutines.launch
 import kotlin.text.category
 
 data class NavItem(
@@ -88,7 +93,13 @@ val navItems = listOf(
 )
 
 @Composable
-fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHomeViewModel, navController: NavController, cartViewModel: CartViewModel) {
+fun CustHomeScreen(
+    rewardViewModel: RewardViewModel,
+    modifier: Modifier = Modifier,
+    viewModel: CustHomeViewModel,
+    navController: NavController,
+    cartViewModel: CartViewModel
+) {
     val menus by viewModel.menus.collectAsStateWithLifecycle(initialValue = emptyList())
     val categories by viewModel.categories.collectAsStateWithLifecycle(initialValue = emptyList())
     val selectedCategory by viewModel.selectedCategory
@@ -101,6 +112,8 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp
     val isTablet = screenWidthDp >= 600
+
+    val userPoints by rewardViewModel.userPoints.observeAsState(0)
 
     Scaffold(
         containerColor = Color.White,
@@ -143,7 +156,7 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
                                 horizontalArrangement = Arrangement.End
                             ) {
                                 Points(
-                                    points = points,
+                                    points = userPoints,
                                     onClick = { navController.navigate("point") })
                             }
 
@@ -187,7 +200,7 @@ fun CustHomeScreen(points: Int, modifier: Modifier = Modifier, viewModel: CustHo
                 )
 
                 Column(Modifier.fillMaxSize()) {
-                    Points(points = points, onClick = {navController.navigate("point")})
+                    Points(points = userPoints, onClick = {navController.navigate("point")})
 
                     val filteredItems = if (selectedCategory == "All") {
                         menus
