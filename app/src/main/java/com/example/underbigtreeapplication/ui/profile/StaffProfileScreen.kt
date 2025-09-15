@@ -1,6 +1,7 @@
 package com.example.underbigtreeapplication.ui.profile
 
 import ads_mobile_sdk.na
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,6 +56,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import coil.compose.AsyncImage
 import com.example.underbigtreeapp.R
+import com.example.underbigtreeapplication.data.remote.FirebaseService
 import com.example.underbigtreeapplication.repository.Profile
 import com.example.underbigtreeapplication.viewModel.ProfileUiState
 import com.example.underbigtreeapplication.viewModel.ProfileViewModel
@@ -151,6 +154,7 @@ private fun StaffProfileContentWrapper(uiState: ProfileUiState, navController: N
 @Composable
 fun StaffProfileContent(profile: Profile, navController: NavController) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -194,6 +198,20 @@ fun StaffProfileContent(profile: Profile, navController: NavController) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Edit Profile")
+        }
+
+        Button(
+            onClick = {
+                FirebaseService.logout()
+                Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
+                navController.navigate("login") {
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    launchSingleTop = true
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Logout")
         }
 
     }

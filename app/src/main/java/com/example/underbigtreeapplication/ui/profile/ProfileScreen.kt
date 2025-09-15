@@ -1,13 +1,11 @@
 package com.example.underbigtreeapplication.ui.profile
 
-import ads_mobile_sdk.na
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,30 +27,26 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.underbigtreeapp.R
+import com.example.underbigtreeapplication.data.remote.FirebaseService
 import com.example.underbigtreeapplication.repository.Profile
 import com.example.underbigtreeapplication.ui.BottomNavigation
 import com.example.underbigtreeapplication.ui.SideNavigationBar
-import com.example.underbigtreeapplication.ui.customerHomePage.SideNavigation
 import com.example.underbigtreeapplication.ui.customerHomePage.navItems
 import com.example.underbigtreeapplication.viewModel.ProfileUiState
 import com.example.underbigtreeapplication.viewModel.ProfileViewModel
-import com.example.underbigtreeapplication.viewModel.ProfileViewModelFactory
 
 data class NavItem(
     val icon: ImageVector,
@@ -75,7 +69,6 @@ fun ProfileScreen (navController: NavController, viewModel: ProfileViewModel) {
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp
     val isTablet = screenWidthDp >= 600
-    var selectedItem by remember { mutableStateOf("profile") }
 
     LaunchedEffect(email) {
         if (email != null) {
@@ -90,9 +83,7 @@ fun ProfileScreen (navController: NavController, viewModel: ProfileViewModel) {
         if (isTablet) {
             SideNavigationBar(
                 items = navItems,
-                selected = selectedItem,
                 navController = navController,
-                onItemSelected = { newSelection -> selectedItem = newSelection }
             ) {
                 Box(
                     modifier = Modifier
@@ -143,6 +134,7 @@ private fun ProfileContentWrapper(uiState: ProfileUiState, navController: NavCon
 @Composable
 fun ProfileContent(profile: Profile, navController: NavController) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -188,6 +180,19 @@ fun ProfileContent(profile: Profile, navController: NavController) {
             Text("Edit Profile")
         }
 
+        Button(
+            onClick = {
+                FirebaseService.logout()
+                Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
+                navController.navigate("login") {
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    launchSingleTop = true
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Logout")
+        }
     }
 }
 

@@ -19,7 +19,6 @@ class CustomerActivityViewModel: ViewModel() {
     private val userId = FirebaseAuth.getInstance().currentUser?.uid
     private val _paymentsWithOrders = MutableLiveData<List<PaymentWithOrders>>()
     val paymentsWithOrders: LiveData<List<PaymentWithOrders>> = _paymentsWithOrders
-    //private val completedOrders = mutableSetOf<String>()
 
     fun fetchUserPayments() {
         if (userId == null) return
@@ -79,12 +78,5 @@ class CustomerActivityViewModel: ViewModel() {
             )
         } ?: emptyList()
         _paymentsWithOrders.value = updatedList
-    }
-
-    fun isOrderReceived(orderId: String): Boolean {
-        return _paymentsWithOrders.value
-            ?.flatMap { it.orders }
-            ?. find { it.orderId == orderId }
-            ?.orderStatus == "received"
     }
 }

@@ -7,6 +7,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,6 +27,7 @@ import com.example.underbigtreeapplication.model.AddOnEntity
 import com.example.underbigtreeapplication.model.MenuEntity
 import com.example.underbigtreeapplication.repository.MenuRepository
 import com.example.underbigtreeapplication.repository.ProfileRepository
+import com.example.underbigtreeapplication.ui.customerActivity.ActivityDetailScreen
 import com.example.underbigtreeapplication.ui.customerActivity.CustActivityScreen
 import com.example.underbigtreeapplication.ui.customerHomePage.CustHomeScreen
 import com.example.underbigtreeapplication.ui.loginPage.LoginScreen
@@ -290,7 +292,6 @@ fun NavigationFlow(navController: NavHostController) {
 
             CustHomeScreen(
                 points = 0,
-                modifier = Modifier,
                 viewModel = viewModel,
                 navController = navController,
                 cartViewModel = cartViewModel
@@ -305,12 +306,25 @@ fun NavigationFlow(navController: NavHostController) {
             )
         }
 
-        composable ("custActivity"){
-            val viewModel: CustomerActivityViewModel = viewModel()
-            CustActivityScreen(
-                navController = navController,
-                viewModel = viewModel
-            )
+        composable("custActivity") { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("custActivity")
+            }
+            val viewModel: CustomerActivityViewModel = viewModel(parentEntry)
+            CustActivityScreen(navController, viewModel)
+        }
+
+        composable(
+            "custActivityDetail/{paymentId}",
+            arguments = listOf(navArgument("paymentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("custActivity")
+            }
+            val viewModel: CustomerActivityViewModel = viewModel(parentEntry)
+
+            val paymentId = backStackEntry.arguments?.getString("paymentId") ?: ""
+            ActivityDetailScreen(paymentId, viewModel, navController)
         }
 
         composable ("custProfile"){
