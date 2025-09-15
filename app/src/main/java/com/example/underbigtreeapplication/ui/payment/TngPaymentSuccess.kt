@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -21,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,6 +38,7 @@ import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.utils.formatAmount
 import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModel
 import com.example.underbigtreeapplication.viewModel.PaymentViewModel
+import com.example.underbigtreeapplication.viewModel.RewardViewModel
 import kotlinx.coroutines.delay
 
 @Composable
@@ -43,8 +46,13 @@ fun TngPaymentSuccess(
     totalAmount: Double,
     viewModel: PaymentViewModel = viewModel(),
     summaryViewModel: OrderSummaryViewModel,
+    rewardViewModel: RewardViewModel = viewModel(),
     onReturnClick: () -> Unit = {},
 ) {
+
+    var showDialog by remember { mutableStateOf(false) }
+    var earnedPoints by remember { mutableStateOf(0) }
+    val unpaidRewards by rewardViewModel.unpaidRewards.observeAsState(emptyList())
 
     var countdown by remember { mutableStateOf(3) }
     LaunchedEffect(Unit) {
@@ -60,7 +68,28 @@ fun TngPaymentSuccess(
             totalAmount = totalAmount,
             method = "TNG",
             onSuccess = {
-                onReturnClick()
+                val points = totalAmount.toInt()
+                viewModel.addPointsToUser(points) {
+                    earnedPoints = points
+                    showDialog = true
+                    rewardViewModel.markAllUnpaidRewardsAsPaid()
+                }
+            }
+        )
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Points Earned!") },
+            text = { Text("You earned $earnedPoints points from this payment.") },
+            confirmButton = {
+                Button(onClick = {
+                    showDialog = false
+                    onReturnClick()
+                }) {
+                    Text("OK")
+                }
             }
         )
     }

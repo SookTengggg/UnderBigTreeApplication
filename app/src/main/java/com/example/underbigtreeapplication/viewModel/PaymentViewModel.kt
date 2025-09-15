@@ -25,7 +25,6 @@ class PaymentViewModel : ViewModel() {
             .format(formatter)
     }
 
-
     fun storePayment(
         orderIds: List<String>,
         totalAmount: Double,
@@ -70,4 +69,25 @@ class PaymentViewModel : ViewModel() {
             onSuccess()
         }
     }
+
+    fun addPointsToUser(points: Int, onComplete: () -> Unit = {}) {
+        val auth = FirebaseAuth.getInstance()
+        val email = auth.currentUser?.email ?: return
+
+        val db = FirebaseFirestore.getInstance()
+        val profileRef = db.collection("Profiles").whereEqualTo("email", email)
+
+        profileRef.get().addOnSuccessListener { snapshot ->
+            if (!snapshot.isEmpty) {
+                val docRef = snapshot.documents[0].reference
+                db.runTransaction { transaction ->
+                    val currentPoints = transaction.get(docRef).getLong("points") ?: 0
+                    transaction.update(docRef, "points", currentPoints + points)
+                }.addOnSuccessListener {
+                    onComplete()
+                }
+            }
+        }
+    }
+
 }

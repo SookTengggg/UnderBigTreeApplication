@@ -5,6 +5,7 @@ data class RewardItem(
     val name: String = "",
     val condition: String = "Can only redeem one time",
     val pointsRequired: Int = 50,
-    var isRedeemed: Boolean = false
+    var isRedeemed: Boolean = false,
+    var isPaid: Boolean = false
 )
 

@@ -63,6 +63,7 @@ import com.example.underbigtreeapplication.viewModel.OrderSummaryViewModelFactor
 import com.example.underbigtreeapplication.viewModel.ProfileUiState
 import com.example.underbigtreeapplication.viewModel.ProfileViewModel
 import com.example.underbigtreeapplication.viewModel.ProfileViewModelFactory
+import com.example.underbigtreeapplication.viewModel.RewardViewModel
 import com.example.underbigtreeapplication.viewModel.StaffActivityViewModel
 import com.example.underbigtreeapplication.viewModel.StaffViewModel
 import com.example.underbigtreeapplication.viewModel.StaffViewModelFactory
@@ -83,6 +84,7 @@ fun NavigationFlow(navController: NavHostController) {
         else -> "login"
     }
     val cartViewModel: CartViewModel = viewModel()
+    val rewardViewModel: RewardViewModel = viewModel()
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable("login") {
@@ -277,21 +279,21 @@ fun NavigationFlow(navController: NavHostController) {
 //            val staffViewModel: StaffViewModel = viewModel()
 
             FoodEditScreen(
-                navController = navController,
+                navController = navController
 //                foodId = foodId,
 //                foodType = foodType,
 //                staffViewModel = staffViewModel
             )
         }
 
-        composable("home") {
+        composable(route = "home") {
             val context = LocalContext.current
             val database = AppDatabase.getDatabase(context)
             val repository = remember { MenuRepository(database) }
             val viewModel: CustHomeViewModel = viewModel(factory = CustHomeViewModelFactory(repository))
 
             CustHomeScreen(
-                points = 0,
+                rewardViewModel = rewardViewModel,
                 viewModel = viewModel,
                 navController = navController,
                 cartViewModel = cartViewModel
@@ -372,7 +374,10 @@ fun NavigationFlow(navController: NavHostController) {
         composable("point") {
             RewardsScreen(
                 onBackClick = { navController.popBackStack() },
-                onRedeemClick={}
+                onRedeemSuccess = {
+                    navController.navigate("orderSummaryScreen")
+                },
+                viewModel = rewardViewModel
             )
         }
 
@@ -393,9 +398,11 @@ fun NavigationFlow(navController: NavHostController) {
             val summaryViewModel: OrderSummaryViewModel = viewModel(
                 factory = OrderSummaryViewModelFactory(cartViewModel)
             )
+            val reward by rewardViewModel.redeemedReward.observeAsState()
             OrderSummaryScreen(
                 viewModel = summaryViewModel,
-                navController,
+                rewardViewModel = rewardViewModel,
+                navController = navController,
                 onBackClick = { navController.popBackStack() },
             )
         }
@@ -419,9 +426,7 @@ fun NavigationFlow(navController: NavHostController) {
             TngPaymentSuccess(
                 totalAmount = totalAmount,
                 summaryViewModel = summaryViewModel,
-                onReturnClick = {
-                    navController.navigate("home")
-                }
+                onReturnClick = {navController.navigate("home")}
             )
         }
 
