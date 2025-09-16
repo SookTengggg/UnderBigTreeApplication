@@ -136,7 +136,8 @@ class RewardViewModel : ViewModel() {
                                     "condition" to reward.condition,
                                     "pointsRequired" to reward.pointsRequired,
                                     "isRedeemed" to true,
-                                    "isPaid" to false
+                                    "isPaid" to false,
+                                    "paymentId" to null
                                 )
 
                                 db.collection("Profiles")

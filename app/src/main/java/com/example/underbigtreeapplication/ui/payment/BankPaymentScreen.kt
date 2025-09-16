@@ -120,4 +120,3 @@ fun BankPaymentScreen(
         Spacer(modifier = Modifier.height(100.dp))
     }
 }
-

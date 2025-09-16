@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -40,12 +41,20 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.model.CartItem
+import com.example.underbigtreeapplication.model.Payment
+import com.example.underbigtreeapplication.model.RewardItem
 import com.example.underbigtreeapplication.utils.formatAmount
 import com.example.underbigtreeapplication.viewModel.CustomerActivityViewModel
 
 @Composable
 fun ActivityDetailScreen(paymentId: String, viewModel: CustomerActivityViewModel, navController: NavController){
     val paymentsWithOrders by viewModel.paymentsWithOrders.observeAsState(emptyList())
+    val redeemedRewards by viewModel.redeemedRewardsForPayment.observeAsState(emptyList())
+
+    LaunchedEffect(paymentId) {
+        viewModel.fetchRedeemedRewardsForPayment(paymentId)
+    }
+
     val paymentWithOrders = paymentsWithOrders.find { it.payment.paymentId == paymentId }
 
     if (paymentWithOrders == null){
@@ -60,6 +69,7 @@ fun ActivityDetailScreen(paymentId: String, viewModel: CustomerActivityViewModel
             paymentId,
             orders = paymentWithOrders.orders,
             subtotal = paymentWithOrders.payment.totalPrice,
+            redeemedRewards = redeemedRewards,
             navController = navController,
             viewModel
         )
@@ -67,19 +77,19 @@ fun ActivityDetailScreen(paymentId: String, viewModel: CustomerActivityViewModel
 }
 
 @Composable
-fun ActivityDetailContent(paymentId: String, orders: List<CartItem>, subtotal: Double, navController: NavController, viewModel: CustomerActivityViewModel) {
+fun ActivityDetailContent(paymentId: String, orders: List<CartItem>, subtotal: Double, redeemedRewards: List<RewardItem>, navController: NavController, viewModel: CustomerActivityViewModel) {
     val scrollState = rememberScrollState()
     val allCompleted = orders.all { it.orderStatus == "completed" }
     val allReceive = orders.all { it.orderStatus == "received" }
-    var countdown by remember { mutableStateOf(10) }
+
     var autoTriggered by remember { mutableStateOf(false) }
 
-   Box(
-       modifier = Modifier
-           .fillMaxSize()
-           .background(Color.White)
-           .systemBarsPadding()
-   ) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .systemBarsPadding()
+    ) {
         Column(
             modifier = Modifier
                 .verticalScroll(scrollState)
@@ -109,7 +119,7 @@ fun ActivityDetailContent(paymentId: String, orders: List<CartItem>, subtotal: D
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
             )
 
-            if (orders.isEmpty()) {
+            if (orders.isEmpty() && redeemedRewards.isEmpty()) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -117,7 +127,7 @@ fun ActivityDetailContent(paymentId: String, orders: List<CartItem>, subtotal: D
                 ) {
                     Image(
                         painter = painterResource(R.drawable.no_order),
-                        contentDescription = "No Order History",
+                        contentDescription = "No Activity",
                         modifier = Modifier.size(150.dp)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -158,7 +168,7 @@ fun ActivityDetailContent(paymentId: String, orders: List<CartItem>, subtotal: D
 
                             if (order.selectedAddOns.isNotEmpty()) {
                                 Text(
-                                    "Add-ons: ${order.selectedAddOns.joinToString{ it.name }}",
+                                    "Add-ons: ${order.selectedAddOns.joinToString { it.name }}",
                                     fontSize = 12.sp,
                                     color = Color.Gray
                                 )
@@ -173,38 +183,66 @@ fun ActivityDetailContent(paymentId: String, orders: List<CartItem>, subtotal: D
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                if (redeemedRewards.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Divider(color = Color.LightGray, thickness = 1.dp)
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Subtotal:", fontSize = 16.sp)
-                    Text(formatAmount(subtotal), fontSize = 16.sp)
-                }
-
-                when {
-                    allCompleted && !allReceive -> {
-                        Button(
-                            onClick = {
-                                autoTriggered = true
-                                viewModel.updateOrdersToReceive((orders.map { it.orderId }))
-                            },
+                    redeemedRewards.forEach { reward ->
+                        Row(
                             modifier = Modifier
-                                .padding(8.dp)
                                 .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text ("Order Receive")
+                            Image(
+                                painter = painterResource(R.drawable.reward_pic),
+                                contentDescription = reward.name,
+                                modifier = Modifier.size(80.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(reward.name, fontSize = 14.sp)
+                                Text(
+                                    text = "Points: ${reward.pointsRequired}",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Divider(color = Color.LightGray, thickness = 1.dp)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Subtotal:", fontSize = 16.sp)
+                Text(formatAmount(subtotal), fontSize = 16.sp)
+            }
+
+            if (allCompleted && !allReceive && orders.isNotEmpty()) {
+                Button(
+                    onClick = {
+                        autoTriggered = true
+                        viewModel.updateOrdersToReceive((orders.map { it.orderId }))
+                    },
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth()
+                ) {
+                    Text("Order Receive")
+                }
+            }
         }
+
+        Spacer(modifier = Modifier.height(50.dp))
     }
 }

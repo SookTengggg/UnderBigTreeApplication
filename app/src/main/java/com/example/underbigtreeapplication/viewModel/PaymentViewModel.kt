@@ -27,48 +27,71 @@ class PaymentViewModel : ViewModel() {
 
     fun storePayment(
         orderIds: List<String>,
+        redeemedRewardsId: String,
         totalAmount: Double,
         method: String,
-        onSuccess: () -> Unit = {},
+        onSuccess: (paymentId: String) -> Unit = {},
     ) {
         val db = FirebaseFirestore.getInstance()
         val counterRef = db.collection("Counter").document("PaymentCounter")
+        val email = FirebaseAuth.getInstance().currentUser?.email ?: return
 
-        db.runTransaction { transaction ->
-            val snapshot = transaction.get(counterRef)
-            val lastNumber = snapshot.getLong("lastPaymentNumber") ?: 0
-            val newNumber = lastNumber + 1
+        db.collection("Profiles")
+            .whereEqualTo("email", email)
+            .get()
+            .addOnSuccessListener { profileSnapshot ->
+                if (profileSnapshot.isEmpty) return@addOnSuccessListener
+                val profileDocId = profileSnapshot.documents[0].id  // <-- declared here
 
-            transaction.update(counterRef, "lastPaymentNumber", newNumber)
+                db.runTransaction { transaction ->
+                    val snapshot = transaction.get(counterRef)
+                    val lastNumber = snapshot.getLong("lastPaymentNumber") ?: 0
+                    val newNumber = lastNumber + 1
 
-            val paymentId = "P" + newNumber.toString().padStart(4, '0')
+                    transaction.update(counterRef, "lastPaymentNumber", newNumber)
 
-            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown"
+                    val paymentId = "P" + newNumber.toString().padStart(4, '0')
+                    val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown"
 
-            val payment = Payment(
-                paymentId = paymentId,
-                orderIds = orderIds,
-                totalPrice = totalAmount,
-                paymentMethod = method,
-                transactionDate = System.currentTimeMillis(),
-                phone = phoneNumber,
-                userId = userId
-            )
+                    val payment = Payment(
+                        paymentId = paymentId,
+                        orderIds = orderIds,
+                        totalPrice = totalAmount,
+                        paymentMethod = method,
+                        transactionDate = System.currentTimeMillis(),
+                        phone = phoneNumber,
+                        userId = userId
+                    )
 
-            val paymentRef = db.collection("Payments").document(paymentId)
-            transaction.set(paymentRef, payment)
+                    val paymentRef = db.collection("Payments").document(paymentId)
+                    transaction.set(paymentRef, payment)
 
-            orderIds.forEach { orderId ->
-                val orderRef = db.collection("Orders").document(orderId)
-                transaction.update(orderRef, mapOf(
-                    "paymentId" to paymentId,
-                    "status" to "paid"
-                ))
+                    orderIds.forEach { orderId ->
+                        val orderRef = db.collection("Orders").document(orderId)
+                        transaction.update(orderRef, mapOf(
+                            "paymentId" to paymentId,
+                            "status" to "paid"
+                        ))
+                    }
+
+                    if (redeemedRewardsId.isNotEmpty()) {
+                        val rewardRef = db.collection("Profiles")
+                            .document(profileDocId)
+                            .collection("RedeemedRewards")
+                            .document(redeemedRewardsId)
+
+                        transaction.update(rewardRef, mapOf(
+                            "paymentId" to paymentId,
+                            "isPaid" to true
+                        ))
+                    }
+                    paymentId
+                }.addOnSuccessListener { paymentResult ->
+                    onSuccess(paymentResult)
+                }
             }
-        }.addOnSuccessListener {
-            onSuccess()
-        }
     }
+
 
     fun addPointsToUser(points: Int, onComplete: () -> Unit = {}) {
         val auth = FirebaseAuth.getInstance()
@@ -90,4 +113,33 @@ class PaymentViewModel : ViewModel() {
         }
     }
 
+    fun updatePaymentIdForRedeemedRewards(paymentId: String) {
+        val email = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val db = FirebaseFirestore.getInstance()
+
+        db.collection("Profiles")
+            .whereEqualTo("email", email)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.isEmpty) return@addOnSuccessListener
+                val profileDocId = snapshot.documents[0].id
+
+                db.collection("Profiles")
+                    .document(profileDocId)
+                    .collection("RedeemedRewards")
+                    .whereEqualTo("isPaid", false)
+                    .get()
+                    .addOnSuccessListener { rewardsSnapshot ->
+                        if (rewardsSnapshot.isEmpty) return@addOnSuccessListener
+
+                        for (doc in rewardsSnapshot.documents) {
+                            db.collection("Profiles")
+                                .document(profileDocId)
+                                .collection("RedeemedRewards")
+                                .document(doc.id)
+                                .update("paymentId", paymentId)
+                        }
+                    }
+            }
+    }
 }

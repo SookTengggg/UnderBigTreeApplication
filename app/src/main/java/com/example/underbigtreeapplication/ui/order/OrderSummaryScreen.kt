@@ -190,58 +190,58 @@ fun OrderSummaryScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-            Divider(color = Color.LightGray, thickness = 1.dp)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Subtotal:", fontSize = 16.sp)
-                Text("${formatAmount(subtotal)}", fontSize = 16.sp)
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(
-                modifier = Modifier.padding(8.dp),
-                horizontalAlignment = Alignment.Start
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    Text("Payment Option ", fontSize = 16.sp)
-                    Text("*", fontSize = 16.sp, color = Color.Red)
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = selectedPayment == "tng",
-                        onClick = { selectedPayment = "tng" }
-                    )
-                    Text("Touch n Go")
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = selectedPayment == "bank",
-                        onClick = { selectedPayment = "bank" }
-                    )
-                    Text("Credit/Debit Card")
-                }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = {
-                    if (selectedPayment == "tng") {
-                        navController.navigate("tngPayment/${subtotal}")
-                    } else {
-                        navController.navigate("bankPayment/${subtotal}")
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Pay")
-            }
+        Divider(color = Color.LightGray, thickness = 1.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Subtotal:", fontSize = 16.sp)
+            Text("${formatAmount(subtotal)}", fontSize = 16.sp)
         }
 
-        Spacer(modifier = Modifier.height(50.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Column(
+            modifier = Modifier.padding(8.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Text("Payment Option ", fontSize = 16.sp)
+                Text("*", fontSize = 16.sp, color = Color.Red)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(
+                    selected = selectedPayment == "tng",
+                    onClick = { selectedPayment = "tng" }
+                )
+                Text("Touch n Go")
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(
+                    selected = selectedPayment == "bank",
+                    onClick = { selectedPayment = "bank" }
+                )
+                Text("Credit/Debit Card")
+            }
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = {
+                if (selectedPayment == "tng") {
+                    navController.navigate("tngPayment/${subtotal}")
+                } else {
+                    navController.navigate("bankPayment/${subtotal}")
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Pay")
+        }
+    }
+
+    Spacer(modifier = Modifier.height(50.dp))
 }

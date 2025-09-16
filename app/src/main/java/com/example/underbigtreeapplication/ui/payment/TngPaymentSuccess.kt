@@ -62,18 +62,22 @@ fun TngPaymentSuccess(
             delay(1000)
             countdown--
         }
+
         val currentOrderIds = summaryViewModel.getCurrentOrderIds()
+
         viewModel.storePayment(
             orderIds = currentOrderIds,
+            redeemedRewardsId = "",
             totalAmount = totalAmount,
             method = "TNG",
-            onSuccess = {
+            onSuccess = { paymentId ->
                 val points = totalAmount.toInt()
                 viewModel.addPointsToUser(points) {
                     earnedPoints = points
                     showDialog = true
                     rewardViewModel.markAllUnpaidRewardsAsPaid()
                 }
+                viewModel.updatePaymentIdForRedeemedRewards(paymentId)
             }
         )
     }

@@ -94,12 +94,7 @@ val navItems = listOf(
 )
 
 @Composable
-fun CustHomeScreen(
-    rewardViewModel: RewardViewModel,
-    viewModel: CustHomeViewModel,
-    navController: NavController,
-    cartViewModel: CartViewModel
-) {
+fun CustHomeScreen(rewardViewModel: RewardViewModel, viewModel: CustHomeViewModel, navController: NavController, cartViewModel: CartViewModel) {
     val menus by viewModel.menus.collectAsStateWithLifecycle(initialValue = emptyList())
     val categories by viewModel.categories.collectAsStateWithLifecycle(initialValue = emptyList())
     val selectedCategory by viewModel.selectedCategory
@@ -112,6 +107,11 @@ fun CustHomeScreen(
     val isTablet = screenWidthDp >= 600
 
     val userPoints by rewardViewModel.userPoints.observeAsState(0)
+    val unpaidRewards by rewardViewModel.unpaidRewards.observeAsState(emptyList())
+
+    LaunchedEffect(Unit) {
+        rewardViewModel.fetchUnpaidRedeemedRewards()
+    }
 
     Scaffold(
         containerColor = Color.White,
@@ -126,7 +126,8 @@ fun CustHomeScreen(
         floatingActionButton = {
             CartFab(
                 navController,
-                orderSummaryViewModel = viewModel(factory = OrderSummaryViewModelFactory(cartViewModel))
+                orderSummaryViewModel = viewModel(factory = OrderSummaryViewModelFactory(cartViewModel)),
+                rewardViewModel = rewardViewModel
             )
         },
         floatingActionButtonPosition = FabPosition.Center,
@@ -387,20 +388,23 @@ fun MenuCard(item: MenuEntity, onClick: (MenuEntity) -> Unit){
 }
 
 @Composable
-fun CartFab(navController: NavController, orderSummaryViewModel: OrderSummaryViewModel) {
+fun CartFab(navController: NavController, orderSummaryViewModel: OrderSummaryViewModel, rewardViewModel: RewardViewModel) {
 
     LaunchedEffect(Unit) {
         orderSummaryViewModel.fetchOrders()
+        rewardViewModel.fetchUnpaidRedeemedRewards()
     }
-    val orderItems by orderSummaryViewModel.orders.collectAsState()
 
-    if (orderItems.isNotEmpty()) {
+    val orderItems by orderSummaryViewModel.orders.collectAsState()
+    val unpaidRewards by rewardViewModel.unpaidRewards.observeAsState(emptyList())
+
+    if (orderItems.isNotEmpty() || unpaidRewards.isNotEmpty()) {
         FloatingActionButton(
             onClick = { navController.navigate("orderSummaryScreen") },
             containerColor = Color.Black,
             contentColor = Color.White
         ) {
-            val totalQuantity = orderItems.sumOf { it.quantity }
+            val totalQuantity = orderItems.sumOf { it.quantity } + unpaidRewards.size
             val totalPrice = orderItems.sumOf { it.totalPrice }
 
             Row(
