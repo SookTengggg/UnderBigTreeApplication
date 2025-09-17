@@ -324,8 +324,7 @@ fun Points(points: Int, onClick: () -> Unit){
         contentAlignment = Alignment.CenterEnd
     ) {
         Button(onClick = onClick,
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Black, contentColor = Color.White)
+            shape = CircleShape
         ){
             Text("Points: $points", fontWeight = FontWeight.Bold)
         }
@@ -400,9 +399,7 @@ fun CartFab(navController: NavController, orderSummaryViewModel: OrderSummaryVie
 
     if (orderItems.isNotEmpty() || unpaidRewards.isNotEmpty()) {
         FloatingActionButton(
-            onClick = { navController.navigate("orderSummaryScreen") },
-            containerColor = Color.Black,
-            contentColor = Color.White
+            onClick = { navController.navigate("orderSummaryScreen") }
         ) {
             val totalQuantity = orderItems.sumOf { it.quantity } + unpaidRewards.size
             val totalPrice = orderItems.sumOf { it.totalPrice }

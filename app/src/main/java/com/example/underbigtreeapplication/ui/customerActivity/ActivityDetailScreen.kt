@@ -41,7 +41,6 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.model.CartItem
-import com.example.underbigtreeapplication.model.Payment
 import com.example.underbigtreeapplication.model.RewardItem
 import com.example.underbigtreeapplication.utils.formatAmount
 import com.example.underbigtreeapplication.viewModel.CustomerActivityViewModel
@@ -79,10 +78,21 @@ fun ActivityDetailScreen(paymentId: String, viewModel: CustomerActivityViewModel
 @Composable
 fun ActivityDetailContent(paymentId: String, orders: List<CartItem>, subtotal: Double, redeemedRewards: List<RewardItem>, navController: NavController, viewModel: CustomerActivityViewModel) {
     val scrollState = rememberScrollState()
-    val allCompleted = orders.all { it.orderStatus == "completed" }
-    val allReceive = orders.all { it.orderStatus == "received" }
 
     var autoTriggered by remember { mutableStateOf(false) }
+
+    val hasOrders = orders.isNotEmpty()
+    val hasRewards = redeemedRewards.isNotEmpty()
+
+    val completedOrders = hasOrders && orders.any { it.orderStatus == "completed" }
+    val completedRewards = hasRewards && redeemedRewards.any { it.status == "completed" }
+
+    val showReceiveButton = when {
+        hasOrders && hasRewards -> completedOrders || completedRewards
+        hasOrders -> completedOrders
+        hasRewards -> completedRewards
+        else -> false
+    }
 
     Box(
         modifier = Modifier
@@ -228,17 +238,21 @@ fun ActivityDetailContent(paymentId: String, orders: List<CartItem>, subtotal: D
                 Text(formatAmount(subtotal), fontSize = 16.sp)
             }
 
-            if (allCompleted && !allReceive && orders.isNotEmpty()) {
+            if (showReceiveButton) {
                 Button(
                     onClick = {
                         autoTriggered = true
-                        viewModel.updateOrdersToReceive((orders.map { it.orderId }))
+                        viewModel.updatePaymentToReceived(
+                            paymentId,
+                            orders.map { it.orderId },
+                            redeemedRewards.map { it.id }
+                        )
                     },
                     modifier = Modifier
                         .padding(8.dp)
                         .fillMaxWidth()
                 ) {
-                    Text("Order Receive")
+                    Text("Receive")
                 }
             }
         }

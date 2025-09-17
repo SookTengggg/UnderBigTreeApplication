@@ -173,7 +173,6 @@ fun ActivityCard(
     val hasOrders = group.orders.isNotEmpty()
     val hasRewards = group.rewards.isNotEmpty()
 
-    // Pending
     val pendingOrders = hasOrders && group.orders.any { it.orderStatus == "pending" }
     val pendingRewards = hasRewards && group.rewards.any { it.status == "pending" }
 
@@ -184,7 +183,6 @@ fun ActivityCard(
         else -> false
     }
 
-// Completed → show Receive button
     val completedOrders = hasOrders && group.orders.any { it.orderStatus == "completed" }
     val completedRewards = hasRewards && group.rewards.any { it.status == "completed" }
 
@@ -195,7 +193,6 @@ fun ActivityCard(
         else -> false
     }
 
-// Received
     val receivedOrders = hasOrders && group.orders.any { it.orderStatus == "received" }
     val receivedRewards = hasRewards && group.rewards.any { it.status == "received" }
 
@@ -210,7 +207,6 @@ fun ActivityCard(
     var countdown by remember { mutableStateOf(10) }
     var autoTriggered by remember { mutableStateOf(false) }
 
-    // Auto-update after countdown if completed
     LaunchedEffect(showReceiveButton) {
         if (showReceiveButton) {
             countdown = 10
