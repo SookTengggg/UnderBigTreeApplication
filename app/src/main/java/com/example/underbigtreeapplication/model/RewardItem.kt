@@ -7,5 +7,6 @@ data class RewardItem(
     val pointsRequired: Int = 50,
     var isRedeemed: Boolean = false,
     var isPaid: Boolean = false,
-    var paymentId: String? = null
+    var paymentId: String? = null,
+    var status: String = "pending"
 )

@@ -165,22 +165,66 @@ private fun ActivityContent(paymentWithOrders: List<CustomerActivityViewModel.Pa
 }
 
 @Composable
-fun ActivityCard(group: CustomerActivityViewModel.PaymentWithOrders, viewModel: CustomerActivityViewModel, navController: NavController) {
-    val allCompleted = group.orders.all { it.orderStatus == "completed" }
-    val allReceive = group.orders.all { it.orderStatus == "received" }
+fun ActivityCard(
+    group: CustomerActivityViewModel.PaymentWithOrders,
+    viewModel: CustomerActivityViewModel,
+    navController: NavController
+) {
+    val hasOrders = group.orders.isNotEmpty()
+    val hasRewards = group.rewards.isNotEmpty()
+
+    // Pending
+    val pendingOrders = hasOrders && group.orders.any { it.orderStatus == "pending" }
+    val pendingRewards = hasRewards && group.rewards.any { it.status == "pending" }
+
+    val showPending = when {
+        hasOrders && hasRewards -> pendingOrders || pendingRewards
+        hasOrders -> pendingOrders
+        hasRewards -> pendingRewards
+        else -> false
+    }
+
+// Completed → show Receive button
+    val completedOrders = hasOrders && group.orders.any { it.orderStatus == "completed" }
+    val completedRewards = hasRewards && group.rewards.any { it.status == "completed" }
+
+    val showReceiveButton = when {
+        hasOrders && hasRewards -> completedOrders || completedRewards
+        hasOrders -> completedOrders
+        hasRewards -> completedRewards
+        else -> false
+    }
+
+// Received
+    val receivedOrders = hasOrders && group.orders.any { it.orderStatus == "received" }
+    val receivedRewards = hasRewards && group.rewards.any { it.status == "received" }
+
+    val showReceived = when {
+        hasOrders && hasRewards -> receivedOrders || receivedRewards
+        hasOrders -> receivedOrders
+        hasRewards -> receivedRewards
+        else -> false
+    }
+
+
     var countdown by remember { mutableStateOf(10) }
     var autoTriggered by remember { mutableStateOf(false) }
 
-    LaunchedEffect(allCompleted, allReceive) {
-        if (allCompleted && !allReceive) {
+    // Auto-update after countdown if completed
+    LaunchedEffect(showReceiveButton) {
+        if (showReceiveButton) {
             countdown = 10
             autoTriggered = false
             while (countdown > 0) {
                 delay(1000)
-                countdown --
+                countdown--
             }
-            if (!autoTriggered){
-                viewModel.updateOrdersToReceive(group.orders.map { it.orderId })
+            if (!autoTriggered) {
+                viewModel.updatePaymentToReceived(
+                    group.payment.paymentId,
+                    group.orders.map { it.orderId },
+                    group.rewards.map { it.id }
+                )
                 autoTriggered = true
             }
         }
@@ -190,7 +234,7 @@ fun ActivityCard(group: CustomerActivityViewModel.PaymentWithOrders, viewModel: 
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .clickable{
+            .clickable {
                 navController.navigate("custActivityDetail/${group.payment.paymentId}")
             },
         elevation = CardDefaults.cardElevation(2.dp),
@@ -206,15 +250,14 @@ fun ActivityCard(group: CustomerActivityViewModel.PaymentWithOrders, viewModel: 
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-              painter = painterResource(R.drawable.order),
+                painter = painterResource(R.drawable.order),
                 contentDescription = "Order",
                 modifier = Modifier.size(48.dp)
             )
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column(modifier = Modifier.weight(1f)){
-
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Order #${group.payment.paymentId.takeLast(6)}",
                     fontWeight = FontWeight.Bold,
@@ -229,6 +272,15 @@ fun ActivityCard(group: CustomerActivityViewModel.PaymentWithOrders, viewModel: 
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                group.rewards.forEach { reward ->
+                    Text(
+                        text = reward.name,
+                        maxLines = 1,
+                        fontSize = 14.sp,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -237,30 +289,34 @@ fun ActivityCard(group: CustomerActivityViewModel.PaymentWithOrders, viewModel: 
                 Text(text = "RM ${String.format("%.2f", group.payment.totalPrice)}")
 
                 when {
-                    allCompleted && !allReceive -> {
-                       Button(
-                           onClick = {
-                               autoTriggered = true
-                               viewModel.updateOrdersToReceive((group.orders.map { it.orderId }))
-                           },
-                           modifier = Modifier.padding(8.dp)
-                       ) {
-                           Text ("Order Receive")
-                       }
-                    }
-                    allReceive -> {
-                        Text(
-                            text = "Received",
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF4CAF50),
-                            modifier = Modifier.padding(8.dp)
-                        )
-                    }
-                    else -> {
+                    showPending -> {
                         Text(
                             text = "Pending",
                             fontWeight = FontWeight.Bold,
                             color = Color.Red,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                    showReceiveButton -> {
+                        Button(
+                            onClick = {
+                                autoTriggered = true
+                                viewModel.updatePaymentToReceived(
+                                    group.payment.paymentId,
+                                    group.orders.map { it.orderId },
+                                    group.rewards.map { it.id }
+                                )
+                            },
+                            modifier = Modifier.padding(8.dp)
+                        ) {
+                            Text("Receive")
+                        }
+                    }
+                    showReceived -> {
+                        Text(
+                            text = "Received",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF4CAF50),
                             modifier = Modifier.padding(8.dp)
                         )
                     }

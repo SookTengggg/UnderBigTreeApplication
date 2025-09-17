@@ -137,7 +137,8 @@ class RewardViewModel : ViewModel() {
                                     "pointsRequired" to reward.pointsRequired,
                                     "isRedeemed" to true,
                                     "isPaid" to false,
-                                    "paymentId" to null
+                                    "paymentId" to null,
+                                    "status" to "pending"
                                 )
 
                                 db.collection("Profiles")
@@ -194,7 +195,8 @@ class RewardViewModel : ViewModel() {
                                 condition = doc.getString("condition") ?: "Can only redeem one time",
                                 pointsRequired = doc.getLong("pointsRequired")?.toInt() ?: 0,
                                 isRedeemed = doc.getBoolean("isRedeemed") ?: true,
-                                isPaid = doc.getBoolean("isPaid") ?: false
+                                isPaid = doc.getBoolean("isPaid") ?: false,
+                                status = doc.getString("status") ?: "pending"
                             )
                         }
 
@@ -218,6 +220,7 @@ class RewardViewModel : ViewModel() {
                     .document(profileDocId)
                     .collection("RedeemedRewards")
                     .whereEqualTo("isPaid", false)
+                    .whereEqualTo("status", "pending")
                     .get()
                     .addOnSuccessListener { rewardsSnapshot ->
                         if (rewardsSnapshot.isEmpty) return@addOnSuccessListener
@@ -227,9 +230,32 @@ class RewardViewModel : ViewModel() {
                                 .document(profileDocId)
                                 .collection("RedeemedRewards")
                                 .document(doc.id)
-                                .update("isPaid", true)
+                                .update(
+                                    mapOf(
+                                        "isPaid" to true
+                                    )
+                                )
                         }
                     }
             }
     }
+
+    fun markRewardAsReceived(rewardId: String) {
+        val email = auth.currentUser?.email ?: return
+
+        db.collection("Profiles")
+            .whereEqualTo("email", email)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.isEmpty) return@addOnSuccessListener
+                val profileDocId = snapshot.documents[0].id
+
+                db.collection("Profiles")
+                    .document(profileDocId)
+                    .collection("RedeemedRewards")
+                    .document(rewardId)
+                    .update("status", "received")
+            }
+    }
+
 }

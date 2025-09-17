@@ -6,14 +6,17 @@ import androidx.lifecycle.ViewModel
 import com.example.underbigtreeapplication.model.CartItem
 import com.example.underbigtreeapplication.model.Payment
 import com.example.underbigtreeapplication.model.RewardItem
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
 
 class CustomerActivityViewModel: ViewModel() {
 
     data class PaymentWithOrders(
         val payment: Payment,
-        val orders: List<CartItem>
+        val orders: List<CartItem>,
+        val rewards: List<RewardItem> = emptyList()
     )
 
     private val db = FirebaseFirestore.getInstance()
@@ -47,24 +50,34 @@ class CustomerActivityViewModel: ViewModel() {
                             .get()
                             .addOnSuccessListener { orderSnapshot ->
                                 val orders = orderSnapshot.toObjects(CartItem::class.java)
-                                allPaymentWithOrders.add(PaymentWithOrders(payment, orders))
 
-                                processedCount++
-                                if (processedCount == payments.size) {
-                                    _paymentsWithOrders.value =
-                                        allPaymentWithOrders.sortedByDescending {
-                                            it.payment.transactionDate
-                                        }
+                                fetchRewardsForPayment(payment.paymentId) { rewards ->
+                                    allPaymentWithOrders.add(
+                                        PaymentWithOrders(payment, orders, rewards)
+                                    )
+
+                                    processedCount++
+                                    if (processedCount == payments.size) {
+                                        _paymentsWithOrders.value =
+                                            allPaymentWithOrders.sortedByDescending {
+                                                it.payment.transactionDate
+                                            }
+                                    }
                                 }
                             }
                     } else {
-                        allPaymentWithOrders.add(PaymentWithOrders(payment, emptyList()))
-                        processedCount++
-                        if(processedCount == payments.size) {
-                            _paymentsWithOrders.value =
-                                allPaymentWithOrders.sortedByDescending {
-                                    it.payment.transactionDate
-                                }
+                        fetchRewardsForPayment(payment.paymentId) { rewards ->
+                            allPaymentWithOrders.add(
+                                PaymentWithOrders(payment, emptyList(), rewards)
+                            )
+
+                            processedCount++
+                            if (processedCount == payments.size) {
+                                _paymentsWithOrders.value =
+                                    allPaymentWithOrders.sortedByDescending {
+                                        it.payment.transactionDate
+                                    }
+                            }
                         }
                     }
                 }
@@ -118,12 +131,108 @@ class CustomerActivityViewModel: ViewModel() {
                                 condition = doc.getString("condition") ?: "Can only redeem one time",
                                 pointsRequired = doc.getLong("pointsRequired")?.toInt() ?: 0,
                                 isRedeemed = doc.getBoolean("isRedeemed") ?: true,
-                                isPaid = doc.getBoolean("isPaid") ?: false
+                                isPaid = doc.getBoolean("isPaid") ?: false,
+                                paymentId = doc.getString("paymentId"),
+                                status = doc.getString("status") ?: "pending"
                             )
                         }
 
                         _redeemedRewardsForPayment.value = rewards
                     }
             }
+    }
+
+    fun fetchRewardsForPayment(paymentId: String, onResult: (List<RewardItem>) -> Unit) {
+        val email = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val db = FirebaseFirestore.getInstance()
+
+        db.collection("Profiles")
+            .whereEqualTo("email", email)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.isEmpty) {
+                    onResult(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                val profileDocId = snapshot.documents[0].id
+
+                db.collection("Profiles")
+                    .document(profileDocId)
+                    .collection("RedeemedRewards")
+                    .whereEqualTo("paymentId", paymentId)
+                    .get()
+                    .addOnSuccessListener { rewardsSnapshot ->
+                        val rewards = rewardsSnapshot.documents.map { doc ->
+                            RewardItem(
+                                id = doc.id,
+                                name = doc.getString("name") ?: "Unknown",
+                                condition = doc.getString("condition") ?: "Can only redeem one time",
+                                pointsRequired = doc.getLong("pointsRequired")?.toInt() ?: 0,
+                                isRedeemed = doc.getBoolean("isRedeemed") ?: true,
+                                isPaid = doc.getBoolean("isPaid") ?: false,
+                                paymentId = doc.getString("paymentId"),
+                                status = doc.getString("status") ?: "pending"
+                            )
+                        }
+                        onResult(rewards)
+                    }
+            }
+    }
+
+    fun updatePaymentToReceived(paymentId: String, orderIds: List<String>, rewardIds: List<String>) {
+        val db = FirebaseFirestore.getInstance()
+        val batch = db.batch()
+
+        if (orderIds.isNotEmpty()) {
+            orderIds.forEach { orderId ->
+                val orderRef = db.collection("Orders").document(orderId)
+                batch.update(orderRef, "orderStatus", "received")
+            }
+        }
+
+        if (rewardIds.isNotEmpty()) {
+            val email = FirebaseAuth.getInstance().currentUser?.email ?: return
+            db.collection("Profiles")
+                .whereEqualTo("email", email)
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    if (snapshot.isEmpty) return@addOnSuccessListener
+                    val profileDocId = snapshot.documents[0].id
+
+                    rewardIds.forEach { rewardId ->
+                        val rewardRef = db.collection("Profiles")
+                            .document(profileDocId)
+                            .collection("RedeemedRewards")
+                            .document(rewardId)
+                        batch.update(rewardRef, "status", "received")
+                    }
+
+                    batch.commit().addOnSuccessListener {
+                        updateLocalState(paymentId, orderIds, rewardIds)
+                    }
+                }
+        } else {
+            batch.commit().addOnSuccessListener {
+                updateLocalState(paymentId, orderIds, rewardIds)
+            }
+        }
+    }
+
+    private fun updateLocalState(paymentId: String, orderIds: List<String>, rewardIds: List<String>) {
+        val updatedList = _paymentsWithOrders.value?.map { pw ->
+            if (pw.payment.paymentId == paymentId) {
+                pw.copy(
+                    orders = pw.orders.map { order ->
+                        if (orderIds.contains(order.orderId)) order.copy(orderStatus = "received") else order
+                    },
+                    rewards = pw.rewards.map { reward ->
+                        if (rewardIds.contains(reward.id)) reward.copy(status = "received") else reward
+                    }
+                )
+            } else pw
+        } ?: emptyList()
+
+        _paymentsWithOrders.value = updatedList
     }
 }
