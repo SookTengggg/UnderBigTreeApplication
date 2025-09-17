@@ -64,7 +64,6 @@ class StaffViewModel(private val repository: MenuRepository) : ViewModel() {
             .addOnFailureListener { e -> Log.e("StaffVM", "Error updating menu", e) }
     }
 
-    // Update AddOn
     fun updateAddOn(addon: AddOnEntity) {
         addonCollection.document(addon.id)
             .set(addon)
@@ -113,12 +112,13 @@ class StaffViewModel(private val repository: MenuRepository) : ViewModel() {
             repository.updateAddOnAvailability(addonId, available)
         }
     }
+    fun deleteAddOn(addOnId: String) {
+        viewModelScope.launch {
+            repository.deleteAddOn(addOnId)
+        }
+    }
     suspend fun getLastDrinkIdFromFirebase(): String? {
         return repository.getLastDrinkId()
-    }
-
-    suspend fun uploadDrinkImageFromUri(uri: Uri, id: String): String? {
-        return repository.uploadDrinkImageFromUri(uri, id)
     }
 
     fun addDrink(drink: DrinkEntity) {

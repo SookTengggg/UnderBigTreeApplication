@@ -1,7 +1,7 @@
 package com.example.underbigtreeapplication.ui.staff
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -19,14 +19,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.underbigtreeapp.R
-import com.example.underbigtreeapplication.ui.BottomNavigation
-import com.example.underbigtreeapplication.ui.SideNavigationBar
-import com.example.underbigtreeapplication.ui.customerHomePage.navItems
 import com.example.underbigtreeapplication.ui.profile.StaffBottomNavigation
 import com.example.underbigtreeapplication.ui.profile.StaffSideNavigationBar
 import com.example.underbigtreeapplication.ui.profile.staffNavItems
 import com.example.underbigtreeapplication.viewModel.StaffActivityViewModel
-import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,14 +60,12 @@ fun StaffActivityScreen(
                     )
                 },
             ) { innerPadding ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(16.dp)
-                ) {
-                    StaffActivityContent(paymentsWithOrders, viewModel)
-                }
+                StaffActivityContent(
+                    paymentsWithOrders,
+                    viewModel,
+                    Modifier.padding(innerPadding).padding(16.dp),
+                    navController
+                )
             }
         }
     } else {
@@ -93,14 +87,12 @@ fun StaffActivityScreen(
                 )
             },
         ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp)
-            ) {
-                StaffActivityContent(paymentsWithOrders, viewModel)
-            }
+            StaffActivityContent(
+                paymentsWithOrders,
+                viewModel,
+                Modifier.padding(innerPadding).padding(16.dp),
+                navController
+            )
         }
     }
 }
@@ -108,11 +100,13 @@ fun StaffActivityScreen(
 @Composable
 private fun StaffActivityContent(
     paymentWithOrders: List<StaffActivityViewModel.PaymentWithOrders>,
-    viewModel: StaffActivityViewModel
+    viewModel: StaffActivityViewModel,
+    modifier: Modifier = Modifier,
+    navController: NavController
 ) {
     if (paymentWithOrders.isEmpty()) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -130,9 +124,7 @@ private fun StaffActivityContent(
             }
         }
     } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize()
-        ) {
+        LazyColumn(modifier = modifier.fillMaxSize()) {
             val grouped = paymentWithOrders.groupBy { formatDate(it.payment.transactionDate) }
             grouped.forEach { (date, groups) ->
                 item {
@@ -143,7 +135,7 @@ private fun StaffActivityContent(
                     )
                 }
                 items(groups.size) { index ->
-                    StaffActivityCard(groups[index], viewModel)
+                    StaffActivityCard(groups[index], viewModel, navController)
                 }
             }
         }
@@ -153,14 +145,18 @@ private fun StaffActivityContent(
 @Composable
 fun StaffActivityCard(
     group: StaffActivityViewModel.PaymentWithOrders,
-    viewModel: StaffActivityViewModel
+    viewModel: StaffActivityViewModel,
+    navController: NavController
 ) {
     val allCompleted = group.orders.all { viewModel.isOrderCompleted(it.orderId) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .clickable{
+                navController.navigate("staffActivityDetail/${group.payment.paymentId}")
+            },
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F2F2), contentColor = Color.Black)
     ) {
@@ -179,13 +175,58 @@ fun StaffActivityCard(
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
+
+                Text(
+                    text = "Order #${group.payment.paymentId.takeLast(6)}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+
                 group.orders.forEach { order ->
                     Text(
-                        text = "${order.food.name} (User: ${group.payment.userId.take(6)})",
+                        text = "${order.quantity} ${order.food.name}",
                         maxLines = 1,
                         fontSize = 14.sp,
-                        overflow = TextOverflow.Ellipsis,
-                        color = Color.Black
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if(!order.selectedSauces.isNullOrEmpty()){
+                        Text(
+                            text = "  - Sauce: ${order.selectedSauces.joinToString { it.name }}",
+                            maxLines = 1,
+                            fontSize = 10.sp,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    if(!order.selectedAddOns.isNullOrEmpty()){
+                        Text(
+                            text = "  - Add-ons: ${order.selectedAddOns.joinToString { it.name }}",
+                            maxLines = 1,
+                            fontSize = 10.sp,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    if(!order.remarks.isNullOrEmpty()){
+                        Text(
+                            text = "  - Remarks: ${order.remarks}",
+                            maxLines = 1,
+                            fontSize = 10.sp,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    if (order.takeAway) {
+                        Text(
+                            text = "  - Take Away",
+                            fontSize = 10.sp
+                        )
+                    }
+                }
+
+                group.redeemedRewards.forEach { reward ->
+                    Text(
+                        text = "🎁 ${reward.name}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF388E3C)
                     )
                 }
             }
@@ -200,7 +241,7 @@ fun StaffActivityCard(
                         onClick = { viewModel.updateOrdersToComplete(group.orders.map { it.orderId }) },
                         modifier = Modifier.padding(top = 8.dp)
                     ) {
-                        Text("Mark Complete")
+                        Text("Complete")
                     }
                 }
             }
@@ -208,8 +249,7 @@ fun StaffActivityCard(
     }
 }
 
-// Utility function
 private fun formatDate(timeStamp: Long): String {
-    val sdf = java.text.SimpleDateFormat("dd MM yyyy", Locale.getDefault())
+    val sdf = java.text.SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     return sdf.format(Date(timeStamp))
 }

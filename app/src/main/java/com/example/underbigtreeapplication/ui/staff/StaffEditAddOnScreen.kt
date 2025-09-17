@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -13,16 +14,43 @@ import com.example.underbigtreeapplication.model.AddOnEntity
 import com.example.underbigtreeapplication.viewModel.StaffViewModel
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StaffEditAddOnScreen(
     navController: NavController,
     staffViewModel: StaffViewModel,
+    addOnId: String
+) {
+    val addons by staffViewModel.addons.collectAsState()
+    val addOn = addons.find { it.id == addOnId }
+
+    if (addOn == null) {
+        LaunchedEffect(addOnId) {
+            val fetchedAddOn = staffViewModel.getAddOnById(addOnId)
+            if (fetchedAddOn != null) {
+                staffViewModel.addAddOn(fetchedAddOn)
+            }
+        }
+        Box(
+            Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    } else {
+        EditAddOnForm(navController, staffViewModel, addOn)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditAddOnForm(
+    navController: NavController,
+    staffViewModel: StaffViewModel,
     addOn: AddOnEntity
 ) {
-    var name by remember { mutableStateOf(addOn.name) }
-    var price by remember { mutableStateOf(addOn.price.toString()) }
-    var showError by remember { mutableStateOf(false) }
+    var name by rememberSaveable { mutableStateOf(addOn.name) }
+    var price by rememberSaveable { mutableStateOf(addOn.price.toString()) }
+    var showError by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 

@@ -60,10 +60,10 @@ class ProfileViewModel (private  val repository: ProfileRepository) : ViewModel(
         }
     }
 
-    fun createProfile(name: String, phone: String, email: String, gender: String) {
+    fun createProfile(authUid: String, name: String, phone: String, email: String, gender: String) {
         viewModelScope.launch {
             try {
-                val profile = repository.createProfile(name, phone, email, gender)
+                val profile = repository.createProfile(authUid, name, phone, email, gender)
                 _profileState.value = ProfileUiState.Success(profile)
             } catch (e: Exception) {
                 _profileState.value = ProfileUiState.Error(e.message ?: "Failed to create profile")

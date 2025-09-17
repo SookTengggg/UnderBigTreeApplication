@@ -23,5 +23,6 @@ interface AddOnDao {
     suspend fun updateAvailability(addonId: String, available: Boolean)
 
     @Query("DELETE FROM addon WHERE id = :addonId")
-    suspend fun deleteSauce(addonId: String)
+    suspend fun deleteAddOn(addonId: String)
+
 }

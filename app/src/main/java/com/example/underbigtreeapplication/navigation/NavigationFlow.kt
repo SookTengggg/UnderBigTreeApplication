@@ -44,6 +44,7 @@ import com.example.underbigtreeapplication.ui.profile.StaffEditProfileScreen
 import com.example.underbigtreeapplication.ui.profile.StaffProfileScreen
 import com.example.underbigtreeapplication.ui.signupPage.SignupScreen
 import com.example.underbigtreeapplication.ui.staff.FoodEditScreen
+import com.example.underbigtreeapplication.ui.staff.StaffActivityDetailScreen
 import com.example.underbigtreeapplication.ui.staff.StaffAddDrinkScreen
 import com.example.underbigtreeapplication.ui.staff.StaffAddFoodScreen
 import com.example.underbigtreeapplication.ui.staff.StaffAddOnScreen
@@ -142,7 +143,7 @@ fun NavigationFlow(navController: NavHostController) {
                         popUpTo("staffHome") { inclusive = true }
                     }
                 }, onContinue = {
-                    navController.navigate("staffFood") {
+                    navController.navigate("staffActivity") {
                         popUpTo("staffHome") { inclusive = true }
                     }
                 }
@@ -231,60 +232,34 @@ fun NavigationFlow(navController: NavHostController) {
             route = "editAddOnMenu/{addOnId}",
             arguments = listOf(navArgument("addOnId") { type = NavType.StringType })
         ) { backStackEntry ->
-
-            // 1️⃣ Get the addOnId from backStackEntry
-            val addOnId = backStackEntry.arguments?.getString("addOnId") ?: ""
-
-            // 2️⃣ Create or get the ViewModel instance
+            val addOnId = backStackEntry.arguments?.getString("addOnId")
             val staffViewModel: StaffViewModel = viewModel(
-                factory = StaffViewModelFactory(MenuRepository(AppDatabase.getDatabase(LocalContext.current)))
+                factory = StaffViewModelFactory(MenuRepository(AppDatabase.getDatabase(context)))
             )
-
-            // 3️⃣ Remember a state for the Add-On being loaded
-            var addOn by remember { mutableStateOf<AddOnEntity?>(null) }
-
-            // 4️⃣ Load the Add-On asynchronously (suspend function)
-            LaunchedEffect(addOnId) {
-                addOn = staffViewModel.getAddOnById(addOnId)
-            }
-
-            // 5️⃣ Show the edit screen once loaded
-            if (addOn != null) {
+            if (addOnId != null) {
                 StaffEditAddOnScreen(
                     navController = navController,
                     staffViewModel = staffViewModel,
-                    addOn = addOn!!
+                    addOnId = addOnId
                 )
-            } else {
-                // Optional: loading indicator while fetching Add-On
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
             }
         }
 
         composable(
-            route = "edit"
-//            arguments = listOf(
-//                navArgument("foodId") { type = NavType.StringType },
-//                navArgument("foodType") { type = NavType.StringType }
-//            )
-        ) {
-//        backStackEntry ->
-//            val foodId = backStackEntry.arguments?.getString("foodId") ?: ""
-//            val foodType = backStackEntry.arguments?.getString("foodType") ?: "menu"
-//            val staffViewModel: StaffViewModel = viewModel()
-
+            route = "editFoodMenu/{menuId}",
+            arguments = listOf(navArgument("menuId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val menuId = backStackEntry.arguments?.getString("menuId")?: return@composable
+            val staffViewModel: StaffViewModel = viewModel(
+                factory = StaffViewModelFactory(MenuRepository(AppDatabase.getDatabase(context)))
+            )
             FoodEditScreen(
-                navController = navController
-//                foodId = foodId,
-//                foodType = foodType,
-//                staffViewModel = staffViewModel
+                navController = navController,
+                staffViewModel = staffViewModel,
+                menuId = menuId
             )
         }
+
 
         composable(route = "home") {
             val context = LocalContext.current
@@ -305,6 +280,23 @@ fun NavigationFlow(navController: NavHostController) {
             StaffActivityScreen(
                 navController = navController,
                 viewModel = staffViewModel
+            )
+        }
+
+        composable(
+            route = "staffActivityDetail/{paymentId}",
+            arguments = listOf(navArgument("paymentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("staffActivity")
+            }
+            val staffViewModel: StaffActivityViewModel = viewModel(parentEntry)
+
+            val paymentId = backStackEntry.arguments?.getString("paymentId") ?: ""
+            StaffActivityDetailScreen(
+                paymentId = paymentId,
+                viewModel = staffViewModel,
+                navController = navController
             )
         }
 

@@ -153,8 +153,10 @@ fun SignupScreen(
                         val result = FirebaseService.registerUser(email, password)
 
                         result.onSuccess { authResult ->
-                            try{
+                            val authUid = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown"
+                            try {
                                 profileRepository.createProfile(
+                                    authUid = authUid,
                                     name = name,
                                     phone = phone,
                                     email = email,

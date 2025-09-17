@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,10 +38,11 @@ import com.example.underbigtreeapplication.viewModel.StaffViewModel
 fun StaffChooseScreen(
     navController: NavController,
     staffViewModel: StaffViewModel,
+    selectedOption: String?,
+    onOptionSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     val options = listOf("Food", "Drink", "Sauce", "Add On")
-    var selectedOption by remember { mutableStateOf<String?>(null) }
 
     Dialog(onDismissRequest = { onDismiss() }) {
 
@@ -56,18 +58,17 @@ fun StaffChooseScreen(
                 Text("Add for...", fontSize = 18.sp)
                 Spacer(Modifier.height(12.dp))
 
-                // Radio options
                 options.forEach { option ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { selectedOption = option }
+                            .clickable { onOptionSelected(option) }
                             .padding(8.dp)
                     ) {
                         RadioButton(
                             selected = selectedOption == option,
-                            onClick = { selectedOption = option }
+                            onClick = { onOptionSelected(option) }
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(option, fontSize = 14.sp)

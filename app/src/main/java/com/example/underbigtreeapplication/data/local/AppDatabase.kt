@@ -14,7 +14,7 @@ import com.example.underbigtreeapplication.model.SauceEntity
 
 @Database(
     entities = [MenuEntity::class, CategoryEntity::class, ProfileEntity::class, SauceEntity::class, AddOnEntity::class],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

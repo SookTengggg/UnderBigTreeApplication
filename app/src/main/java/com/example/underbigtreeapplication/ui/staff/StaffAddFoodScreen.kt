@@ -3,6 +3,7 @@ package com.example.underbigtreeapplication.ui.staff
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,15 +14,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import com.example.underbigtreeapplication.model.MenuEntity
 import com.example.underbigtreeapplication.model.OptionItem
 import com.example.underbigtreeapplication.viewModel.StaffViewModel
@@ -33,21 +37,21 @@ fun StaffAddFoodScreen(
     navController: NavController,
     staffViewModel: StaffViewModel
 ) {
-    var name by remember { mutableStateOf("") }
-    var desc by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf("") }
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
-    var imageUrl by remember { mutableStateOf("") }
-    var useLink by remember { mutableStateOf(false) }
-    var showError by remember { mutableStateOf(false) }
-    var newId by remember { mutableStateOf("") }
-    val categoryOptions = listOf("Rice", "Chicken", "Fish", "Spaghetti", "Drinks")
-    var selectedCategory by remember { mutableStateOf<List<String>>(emptyList()) }
+    var name by rememberSaveable { mutableStateOf("") }
+    var desc by rememberSaveable { mutableStateOf("") }
+    var price by rememberSaveable { mutableStateOf("") }
+    var imageUrl by rememberSaveable { mutableStateOf("") }
+    var showError by rememberSaveable { mutableStateOf(false) }
+    var newId by rememberSaveable { mutableStateOf("") }
+    var isImageLoaded by rememberSaveable { mutableStateOf(false) }
 
-    var availableAddOns by remember { mutableStateOf<List<OptionItem>>(emptyList()) }
-    var selectedAddOns by remember { mutableStateOf<List<String>>(emptyList()) }
-    var availableSauces by remember { mutableStateOf<List<OptionItem>>(emptyList()) }
-    var selectedSauces by remember { mutableStateOf<List<String>>(emptyList()) }
+    val categoryOptions = listOf("Rice", "Chicken", "Fish", "Spaghetti")
+    var selectedCategory by rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
+
+    var availableAddOns by rememberSaveable { mutableStateOf<List<OptionItem>>(emptyList()) }
+    var selectedAddOns by rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
+    var availableSauces by rememberSaveable { mutableStateOf<List<OptionItem>>(emptyList()) }
+    var selectedSauces by rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -60,12 +64,6 @@ fun StaffAddFoodScreen(
         availableSauces = staffViewModel.getAllSauceNamesFromFirebase()
     }
 
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        imageUri = uri
-    }
-
     Scaffold(
         containerColor = Color.White,
         topBar = {
@@ -73,7 +71,11 @@ fun StaffAddFoodScreen(
                 title = { Text("Add New Food") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.Black
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -92,71 +94,45 @@ fun StaffAddFoodScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
-                FilterChip(
-                    selected = !useLink,
-                    onClick = { useLink = false },
-                    label = { Text("Upload Image") },
-                    colors = FilterChipDefaults.filterChipColors(
-                        labelColor = Color.Black,
-                        selectedContainerColor = Color(0xFFF2F2F2),
-                        selectedLabelColor = Color.Black
-                    )
-                )
-                FilterChip(
-                    selected = useLink,
-                    onClick = { useLink = true },
-                    label = { Text("Use Image Link") },
-                    colors = FilterChipDefaults.filterChipColors(
-                        labelColor = Color.Black,
-                        selectedContainerColor = Color(0xFFF2F2F2),
-                        selectedLabelColor = Color.Black
-                    )
+            OutlinedTextField(
+                value = imageUrl,
+                onValueChange = {
+                    imageUrl = it
+                    isImageLoaded = false},
+                label = { Text("Image URL") },
+                modifier = Modifier.fillMaxWidth(),
+                isError = showError && imageUrl.isBlank()
+            )
+            if (showError && imageUrl.isBlank()) {
+                Text(
+                    text = "Image URL is required",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
 
-            if (useLink) {
-                OutlinedTextField(
-                    value = imageUrl,
-                    onValueChange = { imageUrl = it },
-                    label = { Text("Image URL") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 56.dp, max = 100.dp)
-                        .verticalScroll(rememberScrollState()),
-                    maxLines = Int.MAX_VALUE,
-                    singleLine = false,
-                    isError = showError && imageUrl.isBlank()
+            if (imageUrl.isNotBlank()) {
+                val painter = rememberAsyncImagePainter(
+                    model = imageUrl,
+                    onSuccess = { isImageLoaded = true },
+                    onError = { isImageLoaded = false },
+                    onLoading = { isImageLoaded = false }
                 )
-                if (imageUrl.isNotBlank()) {
-                    AsyncImage(
-                        model = imageUrl,
-                        contentDescription = "Preview",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(160.dp)
-                    )
-                }
-            } else {
-                Box(
+                Image(
+                    painter = painter,
+                    contentDescription = "Food Image Preview",
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(160.dp)
-                        .background(Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                        .clickable { launcher.launch("image/*") },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (imageUri != null) {
-                        AsyncImage(model = imageUri, contentDescription = "Food Image")
-                    } else {
-                        Text(
-                            "Click to upload image",
-                            color = if (showError && imageUri == null) Color.Red else Color.Gray
-                        )
-                    }
+                        .height(180.dp)
+                        .background(Color.LightGray)
+                )
+                if (!isImageLoaded) {
+                    Text(
+                        text = "Failed to load image",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
 
@@ -216,7 +192,10 @@ fun StaffAddFoodScreen(
                                 }
                             }
                         )
-                        Text(category,color = if (showError && selectedCategory.isEmpty()) Color.Red else Color.Unspecified)
+                        Text(
+                            category,
+                            color = if (showError && selectedCategory.isEmpty()) Color.Red else Color.Unspecified
+                        )
                     }
                 }
             }
@@ -291,39 +270,33 @@ fun StaffAddFoodScreen(
 
             Button(
                 onClick = {
-                    if (name.isBlank() || price.isBlank() ||
-                        (!useLink && imageUri == null) ||
-                        (useLink && imageUrl.isBlank()) ||
-                        selectedCategory.isEmpty()
+                    if (name.isBlank() || price.isBlank() || imageUrl.isBlank() ||
+                        selectedCategory.isEmpty() || !isImageLoaded
                     ) {
                         showError = true
+                        if (!isImageLoaded) {
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("Please provide a valid image URL that can load.")
+                            }
+                        }
                     } else {
                         coroutineScope.launch {
-                            val finalImageUrl = if (useLink) {
-                                imageUrl
-                            } else {
-                                staffViewModel.uploadDrinkImageFromUri(imageUri!!, newId)
-                            }
 
-                            if (!finalImageUrl.isNullOrBlank()) {
-                                val newFood = MenuEntity(
-                                    id = newId,
-                                    name = name,
-                                    price = price.toDoubleOrNull() ?: 0.0,
-                                    imageRes = finalImageUrl,
-                                    category = selectedCategory,
-                                    desc = desc,
-                                    availability = true,
-                                    addOn = selectedAddOns,
-                                    sauce = selectedSauces
-                                )
-                                staffViewModel.addFood(newFood)
-                                snackbarHostState.showSnackbar("Food added successfully!")
-                                kotlinx.coroutines.delay(300)
-                                navController.popBackStack()
-                            } else {
-                                snackbarHostState.showSnackbar("Failed to upload image. Try again.")
-                            }
+                            val newFood = MenuEntity(
+                                id = newId,
+                                name = name,
+                                price = price.toDoubleOrNull() ?: 0.0,
+                                imageRes = imageUrl,
+                                category = selectedCategory,
+                                desc = desc,
+                                availability = true,
+                                addOn = selectedAddOns,
+                                sauce = selectedSauces
+                            )
+                            staffViewModel.addFood(newFood)
+                            snackbarHostState.showSnackbar("Food added successfully!")
+                            kotlinx.coroutines.delay(300)
+                            navController.popBackStack()
                         }
                     }
                 },

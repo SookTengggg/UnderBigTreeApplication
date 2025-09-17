@@ -23,13 +23,13 @@ import kotlinx.coroutines.tasks.await
 class MenuRepository (private val db: AppDatabase) {
     private val firestore = FirebaseFirestore.getInstance()
     val firebaseStorage = Firebase.storage
-    //room flows
+
     val menus: Flow<List<MenuEntity>> = db.menuDao().getAllMenus()
     val sauces: Flow<List<SauceEntity>> = db.sauceDao().getAllSauces()
     val addons: Flow<List<AddOnEntity>> = db.AddOnDao().getAllAddOn()
 
     val categories: Flow<List<CategoryEntity>> = db.categoryDao().getAllCategories()
-    //refresh from firebase
+
     suspend fun refreshFromFirebase() = withContext(Dispatchers.IO){
         try{
             val menuSnapshot = firestore.collection("Menu").get().await()
@@ -217,6 +217,19 @@ class MenuRepository (private val db: AppDatabase) {
         }
     }
 
+    suspend fun deleteAddOn(addonId: String) = withContext(Dispatchers.IO) {
+        try {
+            firestore.collection("AddOn")
+                .document(addonId)
+                .delete()
+                .await()
+
+            db.AddOnDao().deleteAddOn(addonId)
+
+        } catch (e: Exception) {
+            Log.e("MenuRepository", "Error deleting addon", e)
+        }
+    }
     suspend fun getLastDrinkId(): String? = withContext(Dispatchers.IO) {
         try {
             val snapshot = firestore.collection("Menu").get().await()
@@ -233,14 +246,11 @@ class MenuRepository (private val db: AppDatabase) {
     suspend fun uploadDrinkImageFromUri(imageUri: Uri, id: String): String? {
         val storageReference: StorageReference = FirebaseStorage.getInstance().getReference("$id.jpg")
         return try {
-            // Upload the file
             val uploadTask = storageReference.putFile(imageUri)
-            // Wait for the upload to complete
-            uploadTask.await() // Make sure to use Kotlin Coroutines or a similar approach to wait for the task to finish
-            // Get the download URL
+            uploadTask.await()
             storageReference.downloadUrl.await().toString()
         } catch (e: Exception) {
-            null  // Handle the error appropriately
+            null
         }
     }
 

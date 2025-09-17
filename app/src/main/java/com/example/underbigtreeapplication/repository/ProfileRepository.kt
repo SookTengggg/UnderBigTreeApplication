@@ -19,6 +19,7 @@ enum class UserRole { CUSTOMER, STAFF }
 //@IgnoreExtraProperties
 data class Profile(
     val uid: String = "",
+    val customerId: String = "",
     val name: String = "",
     val phone: String = "",
     val gender: String = "",
@@ -28,11 +29,11 @@ data class Profile(
 )
 
 fun ProfileEntity.toDomain() = Profile(
-    uid, name, phone, gender, email, photoUrl, UserRole.valueOf(role)
+    uid, customerId = customerId ?: "", name, phone, gender, email, photoUrl, UserRole.valueOf(role)
 )
 
 fun Profile.toEntity() = ProfileEntity(
-    uid, name, phone, gender, email, photoUrl, role.name
+    uid, customerId, name, phone, gender, email, photoUrl, role.name
 )
 
 class ProfileRepository(
@@ -77,7 +78,7 @@ class ProfileRepository(
         }
     }
 
-    suspend fun createProfile(name: String, phone: String, email: String, gender: String): Profile {
+    suspend fun createProfile(authUid: String, name: String, phone: String, email: String, gender: String): Profile {
         val role = if (email.equals("underbigtree@gmail.com", ignoreCase = true)) {
             UserRole.STAFF
         } else {
@@ -93,6 +94,7 @@ class ProfileRepository(
 
         val profile = Profile(
             uid = uid,
+            customerId = authUid,
             name = name,
             phone = phone,
             gender = gender,

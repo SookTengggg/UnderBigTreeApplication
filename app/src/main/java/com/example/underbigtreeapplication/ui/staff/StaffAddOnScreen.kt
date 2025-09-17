@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,14 +22,13 @@ fun StaffAddOnScreen(
     navController: NavController,
     staffViewModel: StaffViewModel
 ) {
-    var name by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf("") }
-    var showError by remember { mutableStateOf(false) }
-    var newId by remember { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf("") }
+    var price by rememberSaveable { mutableStateOf("") }
+    var showError by rememberSaveable { mutableStateOf(false) }
+    var newId by rememberSaveable { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    // Generate next Add-On ID from Firebase
     LaunchedEffect(Unit) {
         val lastId = staffViewModel.getLastAddOnIdFromFirebase()
         val nextIdNumber = lastId?.removePrefix("AM")?.toIntOrNull()?.plus(1) ?: 1
@@ -60,7 +60,6 @@ fun StaffAddOnScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Name
             RequiredTextField(
                 label = "Name",
                 value = name,
@@ -68,7 +67,6 @@ fun StaffAddOnScreen(
                 showError = showError && name.isBlank()
             )
 
-            // Price
             RequiredTextField(
                 label = "Price (RM)",
                 value = price,
@@ -78,7 +76,6 @@ fun StaffAddOnScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Confirm button
             Button(
                 onClick = {
                     if (name.isBlank() || price.isBlank()) {
