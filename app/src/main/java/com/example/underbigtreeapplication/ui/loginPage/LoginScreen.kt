@@ -2,8 +2,11 @@ package com.example.underbigtreeapplication.ui.loginPage
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -14,23 +17,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.data.remote.FirebaseService
+import com.example.underbigtreeapplication.viewModel.LoginViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onStaffLogin: () -> Unit,
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    loginViewModel: LoginViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val sharedPref = context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -44,22 +50,42 @@ fun LoginScreen(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
         ) {
-            Text(text = "Login", style = MaterialTheme.typography.headlineMedium)
 
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
+            Image(
+                painter = painterResource(id = R.drawable.ubt_logo),
+                contentDescription = "Under Big Tree Logo",
+                modifier = Modifier
+                    .size(200.dp)
+                    .padding(bottom = 24.dp)
+            )
+
+            Text(
+                text = "Login",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(bottom = 24.dp)
             )
 
             OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
+                value = loginViewModel.email,
+                onValueChange = { loginViewModel.onEmailChange(it) },
+                label = { Text("Email") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            )
+
+            OutlinedTextField(
+                value = loginViewModel.password,
+                onValueChange = { loginViewModel.onPasswordChange(it) },
                 label = { Text("Password") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
@@ -68,10 +94,10 @@ fun LoginScreen(
                 onClick = {
                     isLoading = true
                     scope.launch {
-                        val result = FirebaseService.loginUser(email, password)
+                        val result = FirebaseService.loginUser(loginViewModel.email, loginViewModel.password)
                         isLoading = false
                         result.onSuccess {
-                            if (email == "underbigtree@gmail.com" && password == "ubtree_123") {
+                            if (loginViewModel.email == "underbigtree@gmail.com" && loginViewModel.password == "ubtree_123") {
                                 sharedPref.edit().putBoolean("isLoggedIn", true).putString("userType", "staff").apply()
                                 Toast.makeText(context, "Staff login successful!", Toast.LENGTH_SHORT).show()
                                 onStaffLogin()
@@ -82,7 +108,6 @@ fun LoginScreen(
                             }
                         }.onFailure {
                             errorMessage = it.message ?: "Login failed"
-
                         }
                     }
                 },
@@ -96,22 +121,16 @@ fun LoginScreen(
             }
 
             errorMessage?.let {
-                Text(text = it, color = MaterialTheme.colorScheme.error)
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
 
             if (isLoading) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewLoginScreen() {
-    LoginScreen(
-        onLoginSuccess = {},
-        onStaffLogin = {},
-        onNavigateToRegister = {}
-    )
 }

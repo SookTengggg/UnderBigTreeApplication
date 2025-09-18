@@ -1,8 +1,11 @@
 package com.example.underbigtreeapplication.ui.signupPage
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -17,13 +20,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.underbigtreeapp.R
 import com.example.underbigtreeapplication.data.local.AppDatabase
 import com.example.underbigtreeapplication.data.remote.FirebaseService
-import com.example.underbigtreeapplication.repository.Profile
 import com.example.underbigtreeapplication.repository.ProfileRepository
+import com.example.underbigtreeapplication.viewModel.SignupViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
@@ -31,16 +37,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun SignupScreen(
     onRegisterSuccess: () -> Unit,
-    onNavigateToLogin: () -> Unit
+    onNavigateToLogin: () -> Unit,
+    signupViewModel: SignupViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
 
-    var email by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val database = AppDatabase.getDatabase(context)
@@ -48,7 +50,7 @@ fun SignupScreen(
     val profileRepository = ProfileRepository(dao = profileDao)
     var expanded by remember { mutableStateOf(false) }
     val genderOptions = listOf("Female", "Male", "Prefer not to disclose")
-    var selectedGender by remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
 
     Box(
         modifier = Modifier
@@ -56,22 +58,34 @@ fun SignupScreen(
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.verticalScroll(scrollState)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ubt_logo),
+                contentDescription = "Under Big Tree Logo",
+                modifier = Modifier
+                    .size(200.dp)
+                    .padding(bottom = 24.dp)
+            )
+
             Text(text = "Sign Up", style = MaterialTheme.typography.headlineMedium)
 
             Spacer(modifier = Modifier.height(20.dp))
 
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
+                value = signupViewModel.name,
+                onValueChange = { signupViewModel.onNameChange(it) },
                 label = { Text("Name") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
 
+
             OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
+                value = signupViewModel.phone,
+                onValueChange = { signupViewModel.onPhoneChange(it) },
                 label = { Text("Phone Number") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -79,8 +93,8 @@ fun SignupScreen(
             )
 
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
+                value = signupViewModel.email,
+                onValueChange = { signupViewModel.onEmailChange(it) },
                 label = { Text("Email") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -92,7 +106,7 @@ fun SignupScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
-                    value = selectedGender,
+                    value = signupViewModel.selectedGender,
                     onValueChange = {  },
                     label = { Text("Gender (Optional)") },
                     readOnly = true,
@@ -107,7 +121,7 @@ fun SignupScreen(
                         DropdownMenuItem(
                             text = { Text(gender) },
                             onClick = {
-                                selectedGender = gender
+                                signupViewModel.onGenderSelected(gender)
                                 expanded = false
                             }
                         )
@@ -116,8 +130,8 @@ fun SignupScreen(
             }
 
             OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
+                value = signupViewModel.password,
+                onValueChange = { signupViewModel.onPasswordChange(it) },
                 label = { Text("Password") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -125,13 +139,14 @@ fun SignupScreen(
             )
 
             OutlinedTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
+                value = signupViewModel.confirmPassword,
+                onValueChange = { signupViewModel.onConfirmPasswordChange(it) },
                 label = { Text("Confirm Password") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
+
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -139,28 +154,28 @@ fun SignupScreen(
 
             Button(
                 onClick = {
-                    if (name.isBlank() || phone.isBlank() || email.isBlank()) {
+                    if (signupViewModel.name.isBlank() || signupViewModel.phone.isBlank() || signupViewModel.email.isBlank()) {
                         errorMessage = "Please fill in all required fields"
                         return@Button
                     }
 
-                    if (password != confirmPassword) {
+                    if (signupViewModel.password != signupViewModel.confirmPassword) {
                         errorMessage = "Passwords do not match"
                         return@Button
                     }
                     isLoading = true
                     scope.launch {
-                        val result = FirebaseService.registerUser(email, password)
+                        val result = FirebaseService.registerUser(signupViewModel.email, signupViewModel.password)
 
                         result.onSuccess { authResult ->
                             val authUid = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown"
                             try {
                                 profileRepository.createProfile(
                                     authUid = authUid,
-                                    name = name,
-                                    phone = phone,
-                                    email = email,
-                                    gender = selectedGender
+                                    name = signupViewModel.name,
+                                    phone = signupViewModel.phone,
+                                    email = signupViewModel.email,
+                                    gender = signupViewModel.selectedGender
                                 )
                                 Toast.makeText(context, "Signup successful!", Toast.LENGTH_SHORT).show()
                                 onRegisterSuccess()
