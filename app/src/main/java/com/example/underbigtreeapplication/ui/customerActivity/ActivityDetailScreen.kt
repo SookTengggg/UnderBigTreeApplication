@@ -176,6 +176,14 @@ fun ActivityDetailContent(paymentId: String, orders: List<CartItem>, subtotal: D
                                 Text("(Take Away)", fontSize = 12.sp, color = Color.Gray)
                             }
 
+                            if(order.selectedSauces.isNotEmpty()) {
+                                Text(
+                                    "Sauce: ${order.selectedSauces.joinToString { it.name }}",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                            }
+
                             if (order.selectedAddOns.isNotEmpty()) {
                                 Text(
                                     "Add-ons: ${order.selectedAddOns.joinToString { it.name }}",
