@@ -25,15 +25,16 @@ data class Profile(
     val gender: String = "",
     val email: String = "",
     val photoUrl: String? = null,
+    val points: Int = 0,
     val role: UserRole = UserRole.CUSTOMER
 )
 
 fun ProfileEntity.toDomain() = Profile(
-    uid, customerId = customerId ?: "", name, phone, gender, email, photoUrl, UserRole.valueOf(role)
+    uid, customerId = customerId ?: "", name, phone, gender, email, photoUrl, points,UserRole.valueOf(role)
 )
 
 fun Profile.toEntity() = ProfileEntity(
-    uid, customerId, name, phone, gender, email, photoUrl, role.name
+    uid, customerId, name, phone, gender, email, photoUrl, role.name, points
 )
 
 class ProfileRepository(
