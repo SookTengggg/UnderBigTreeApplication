@@ -1,5 +1,6 @@
 package com.example.underbigtreeapplication.ui.order
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -231,16 +232,35 @@ fun OrderSummaryScreen(
 
         Button(
             onClick = {
+                if (groupedOrders.isEmpty() && unpaidRewards.isEmpty()) {
+                    Toast.makeText(
+                        navController.context,
+                        "Please add an order or reward before choosing a payment method",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@Button
+                }
+
+                if (selectedPayment.isBlank()) {
+                    Toast.makeText(
+                        navController.context,
+                        "Please choose a payment method",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@Button
+                }
+
                 if (selectedPayment == "tng") {
-                    navController.navigate("tngPayment/${subtotal}")
+                    navController.navigate("tngPayment/$subtotal")
                 } else {
-                    navController.navigate("bankPayment/${subtotal}")
+                    navController.navigate("bankPayment/$subtotal")
                 }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Pay")
         }
+
     }
 
     Spacer(modifier = Modifier.height(50.dp))

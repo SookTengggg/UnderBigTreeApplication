@@ -39,13 +39,15 @@ class OrderSummaryViewModel(private val cartViewModel: CartViewModel) : ViewMode
         val updatedList = _orders.value.orEmpty().map {
             if (it.orderId == item.orderId) {
                 val newQuantity = it.quantity + 1
+
+                // use unitPrice = totalPrice / quantity
+                val unitPrice = it.totalPrice / it.quantity
                 val updatedItem = it.copy(
                     quantity = newQuantity,
-                    totalPrice = it.food.price * newQuantity
+                    totalPrice = unitPrice * newQuantity
                 )
 
-                FirebaseFirestore.getInstance()
-                    .collection("Orders")
+                db.collection("Orders")
                     .document(it.orderId)
                     .update(
                         mapOf(
@@ -53,12 +55,12 @@ class OrderSummaryViewModel(private val cartViewModel: CartViewModel) : ViewMode
                             "totalPrice" to updatedItem.totalPrice
                         )
                     )
-               cartViewModel?.updateQuantity(updatedItem, newQuantity)
+
+                cartViewModel.updateQuantity(updatedItem, newQuantity)
 
                 updatedItem
             } else it
         }
-
         _orders.value = updatedList
     }
 
@@ -67,13 +69,13 @@ class OrderSummaryViewModel(private val cartViewModel: CartViewModel) : ViewMode
             if (it.orderId == item.orderId) {
                 val newQuantity = it.quantity - 1
                 if (newQuantity > 0) {
+                    val unitPrice = it.totalPrice / it.quantity
                     val updatedItem = it.copy(
                         quantity = newQuantity,
-                        totalPrice = it.food.price * newQuantity
+                        totalPrice = unitPrice * newQuantity
                     )
 
-                    FirebaseFirestore.getInstance()
-                        .collection("Orders")
+                    db.collection("Orders")
                         .document(it.orderId)
                         .update(
                             mapOf(
@@ -81,19 +83,17 @@ class OrderSummaryViewModel(private val cartViewModel: CartViewModel) : ViewMode
                                 "totalPrice" to updatedItem.totalPrice
                             )
                         )
-                    cartViewModel?.updateQuantity(updatedItem, newQuantity)
+                    cartViewModel.updateQuantity(updatedItem, newQuantity)
                     updatedItem
                 } else {
-                    FirebaseFirestore.getInstance()
-                        .collection("Orders")
+                    db.collection("Orders")
                         .document(it.orderId)
                         .delete()
-                    cartViewModel?.removeFromCart(it)
+                    cartViewModel.removeFromCart(it)
                     null
                 }
             } else it
         }
-
         _orders.value = updatedList
     }
 
