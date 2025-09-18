@@ -165,6 +165,6 @@ fun TngPaymentSuccess(
                 fontWeight = FontWeight.Bold
             )
         }
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(50.dp))
     }
 }

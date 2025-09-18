@@ -149,6 +149,6 @@ fun TngPaymentScreen(
         ) {
             Text("Pay", fontSize = 18.sp, color = Color.White, fontWeight = FontWeight.Bold)
         }
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(50.dp))
     }
 }
