@@ -1,7 +1,9 @@
 package com.example.underbigtreeapplication.ui.order
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +19,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
@@ -61,14 +65,25 @@ fun OrderSummaryScreen(
         rewardViewModel.fetchUnpaidRedeemedRewards()
     }
 
-    val groupedOrders = orders.groupBy { it.food.id to it.takeAway }
-        .map { (_, group) ->
-            val first = group.first()
-            first.copy(
-                quantity = group.sumOf { it.quantity },
-                totalPrice = group.sumOf { it.totalPrice }
+    val groupedOrders = orders.groupBy { order ->
+        if (order.food.category.contains("Drink")) {
+            listOf(order.food.id)
+        } else {
+            listOf(
+                order.food.id,
+                order.selectedSauces.joinToString { it.name },
+                order.selectedAddOns.joinToString { it.name },
+                order.takeAway,
+                order.remarks
             )
         }
+    }.map { (_, group) ->
+        val first = group.first()
+        first.copy(
+            quantity = group.sumOf { it.quantity },
+            totalPrice = group.sumOf { it.totalPrice }
+        )
+    }
 
     val subtotal = groupedOrders.sumOf { it.totalPrice }
 
@@ -101,10 +116,14 @@ fun OrderSummaryScreen(
             Text("No orders yet", fontSize = 16.sp)
         } else {
             groupedOrders.forEach { order ->
+                var expanded by remember { mutableStateOf(false) }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = 8.dp)
+                        .background(Color(0xFFF8F8F8))
+                        .clickable { expanded = !expanded },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     AsyncImage(
@@ -114,36 +133,64 @@ fun OrderSummaryScreen(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Row(modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(order.food.name, fontSize = 14.sp)
-                            Text("${formatAmount(order.totalPrice)}", fontSize = 14.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("${formatAmount(order.totalPrice)}", fontSize = 14.sp)
+                                Icon(
+                                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                    contentDescription = if (expanded) "Collapse" else "Expand",
+                                    modifier = Modifier.padding(start = 6.dp)
+                                )
+                            }
                         }
-                        if (order.takeAway == true) {
-                            Text("(Take Away)", fontSize = 12.sp, color = Color.Gray)
+
+                        AnimatedVisibility(visible = expanded) {
+                            Column {
+                                if (order.takeAway) {
+                                    Text("(Take Away)", fontSize = 12.sp, color = Color.Gray)
+                                }
+                                if (order.selectedSauces.isNotEmpty()) {
+                                    Text(
+                                        "Sauce: ${order.selectedSauces.joinToString { it.name }}",
+                                        fontSize = 12.sp,
+                                        color = Color.Gray
+                                    )
+                                }
+                                if (order.selectedAddOns.isNotEmpty()) {
+                                    Text(
+                                        "Add-ons: ${order.selectedAddOns.joinToString { it.name }}",
+                                        fontSize = 12.sp,
+                                        color = Color.Gray
+                                    )
+                                }
+                                if (order.remarks.isNotBlank()) {
+                                    Text(
+                                        "Remarks: ${order.remarks}",
+                                        fontSize = 12.sp,
+                                        color = Color.Gray
+                                    )
+                                }
+                            }
                         }
 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start
                         ) {
-
                             IconButton(onClick = { viewModel.decreaseQuantity(order) }) {
                                 Text("-", fontSize = 12.sp, color = Color.Gray)
                             }
-
                             Text("Qty: ${order.quantity}", fontSize = 12.sp, color = Color.Gray)
-
                             IconButton(onClick = { viewModel.increaseQuantity(order) }) {
                                 Text("+", fontSize = 12.sp, color = Color.Gray)
                             }
-
                             Spacer(modifier = Modifier.weight(1f))
-
                             IconButton(onClick = { viewModel.removeItem(order) }) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
@@ -181,7 +228,6 @@ fun OrderSummaryScreen(
                             Text(reward.name, fontSize = 14.sp)
                             Text("RM 0.00", fontSize = 14.sp)
                         }
-
                         Text("(Reward)", fontSize = 12.sp, color = Color.Gray)
                     }
                 }
@@ -228,6 +274,7 @@ fun OrderSummaryScreen(
                 Text("Credit/Debit Card")
             }
         }
+
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
@@ -260,8 +307,6 @@ fun OrderSummaryScreen(
         ) {
             Text("Pay")
         }
-
+        Spacer(modifier = Modifier.height(80.dp))
     }
-
-    Spacer(modifier = Modifier.height(50.dp))
 }
