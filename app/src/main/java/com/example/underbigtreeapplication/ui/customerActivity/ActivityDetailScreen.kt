@@ -179,7 +179,7 @@ fun ActivityDetailContent(paymentId: String, orders: List<CartItem>, subtotal: D
                             if(order.selectedSauces.isNotEmpty()) {
                                 Text(
                                     "Sauce: ${order.selectedSauces.joinToString { it.name }}",
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
                                     color = Color.Gray
                                 )
                             }
