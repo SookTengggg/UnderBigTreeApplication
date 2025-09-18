@@ -54,6 +54,7 @@ import com.example.underbigtreeapplication.ui.staff.StaffFoodAvailabilityScreen
 import com.example.underbigtreeapplication.ui.staff.StaffFoodMenuScreen
 import com.example.underbigtreeapplication.ui.staff.StaffWelcomeScreen
 import com.example.underbigtreeapplication.ui.staff.StaffActivityScreen
+import com.example.underbigtreeapplication.ui.staff.StaffEditSauceScreen
 import com.example.underbigtreeapplication.ui.welcomePage.WelcomeScreen
 import com.example.underbigtreeapplication.viewModel.CartViewModel
 import com.example.underbigtreeapplication.viewModel.CustHomeViewModel
@@ -241,6 +242,23 @@ fun NavigationFlow(navController: NavHostController) {
                     navController = navController,
                     staffViewModel = staffViewModel,
                     addOnId = addOnId
+                )
+            }
+        }
+
+        composable(
+            route = "editSauceMenu/{sauceId}",
+            arguments = listOf(navArgument("sauceId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val sauceId = backStackEntry.arguments?.getString("sauceId")
+            val staffViewModel: StaffViewModel = viewModel(
+                factory = StaffViewModelFactory(MenuRepository(AppDatabase.getDatabase(context)))
+            )
+            if (sauceId != null) {
+                StaffEditSauceScreen(
+                    navController = navController,
+                    staffViewModel = staffViewModel,
+                    sauceId = sauceId
                 )
             }
         }

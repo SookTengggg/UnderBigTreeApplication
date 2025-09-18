@@ -30,6 +30,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
+import com.example.underbigtreeapplication.model.SauceEntity
 
 @Composable
 fun StaffFoodMenuScreen(
@@ -39,6 +40,7 @@ fun StaffFoodMenuScreen(
 ) {
     val menuList by staffViewModel.menus.collectAsState()
     val addon by staffViewModel.addons.collectAsState()
+    val sauce by staffViewModel.sauces.collectAsState()
     var showChooseScreen by rememberSaveable { mutableStateOf(false) }
     var selectedOption by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -47,13 +49,14 @@ fun StaffFoodMenuScreen(
     val isTablet = screenWidthDp >= 600
     var selectedItem by remember { mutableStateOf("staffFood") }
 
-    // Global dialog states
     var deleteTargetMenuId by rememberSaveable { mutableStateOf<String?>(null) }
     val deleteTargetMenu = menuList.find { it.id == deleteTargetMenuId }
 
     var deleteTargetAddonId by rememberSaveable { mutableStateOf<String?>(null) }
     val deleteTargetAddon = addon.find { it.id == deleteTargetAddonId }
 
+    var deleteTargetSauceId by rememberSaveable { mutableStateOf<String?>(null) }
+    val deleteTargetSauce = sauce.find { it.id == deleteTargetSauceId }
 
     Box(Modifier.fillMaxSize()) {
         if (isTablet) {
@@ -66,15 +69,21 @@ fun StaffFoodMenuScreen(
                 MenuContent(
                     menuList = menuList,
                     addon = addon,
+                    sauce = sauce,
                     onMenuClick = { selectedMenu ->
                         val encodedId = URLEncoder.encode(selectedMenu.id, StandardCharsets.UTF_8.toString())
                         navController.navigate("editFoodMenu/$encodedId")
+                    },
+                    onSauceClick = { selectedSauce ->
+                        val encodedId = URLEncoder.encode(selectedSauce.id, StandardCharsets.UTF_8.toString())
+                        navController.navigate("editSauceMenu/$encodedId")
                     },
                     onAddOnClick = { selectedAddOn ->
                         val encodedId = URLEncoder.encode(selectedAddOn.id, StandardCharsets.UTF_8.toString())
                         navController.navigate("editAddOnMenu/$encodedId")
                     },
                     onMenuDelete = { deleteTargetMenuId = it.id },
+                    onSauceDelete = { deleteTargetSauceId = it.id },
                     onAddOnDelete = { deleteTargetAddonId = it.id },
                     showChooseScreen = showChooseScreen,
                     onShowChooseScreen = { showChooseScreen = it }
@@ -93,15 +102,21 @@ fun StaffFoodMenuScreen(
                 MenuContent(
                     menuList = menuList,
                     addon = addon,
+                    sauce = sauce,
                     onMenuClick = { selectedMenu ->
                         val encodedId = URLEncoder.encode(selectedMenu.id, StandardCharsets.UTF_8.toString())
                         navController.navigate("editFoodMenu/$encodedId")
+                    },
+                    onSauceClick = { selectedSauce ->
+                        val encodedId = URLEncoder.encode(selectedSauce.id, StandardCharsets.UTF_8.toString())
+                        navController.navigate("editSauceMenu/$encodedId")
                     },
                     onAddOnClick = { selectedAddOn ->
                         val encodedId = URLEncoder.encode(selectedAddOn.id, StandardCharsets.UTF_8.toString())
                         navController.navigate("editAddOnMenu/$encodedId")
                     },
                     onMenuDelete = { deleteTargetMenuId = it.id },
+                    onSauceDelete = { deleteTargetSauceId = it.id },
                     onAddOnDelete = { deleteTargetAddonId = it.id },
                     showChooseScreen = showChooseScreen,
                     onShowChooseScreen = { showChooseScreen = it },
@@ -110,7 +125,6 @@ fun StaffFoodMenuScreen(
             }
         }
 
-        // Global Delete Dialogs
         deleteTargetMenu?.let { menu ->
             AlertDialog(
                 onDismissRequest = { deleteTargetMenuId = null },
@@ -124,6 +138,23 @@ fun StaffFoodMenuScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { deleteTargetMenuId = null }) { Text("Cancel") }
+                }
+            )
+        }
+
+        deleteTargetSauce?.let { sauceItem ->
+            AlertDialog(
+                onDismissRequest = { deleteTargetSauceId = null },
+                title = { Text("Delete Sauce") },
+                text = { Text("Are you sure you want to delete '${sauceItem.name}'?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        staffViewModel.deleteSauce(sauceItem.id)
+                        deleteTargetSauceId = null
+                    }) { Text("OK") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { deleteTargetSauceId = null }) { Text("Cancel") }
                 }
             )
         }
@@ -145,7 +176,6 @@ fun StaffFoodMenuScreen(
             )
         }
 
-        // Choose screen overlay
         if (showChooseScreen) {
             StaffChooseScreen(
                 navController = navController,
@@ -162,9 +192,12 @@ fun StaffFoodMenuScreen(
 private fun MenuContent(
     menuList: List<MenuEntity>,
     addon: List<AddOnEntity>,
+    sauce: List<SauceEntity>,
     onMenuClick: (MenuEntity) -> Unit,
+    onSauceClick: (SauceEntity) -> Unit,
     onAddOnClick: (AddOnEntity) -> Unit,
     onMenuDelete: (MenuEntity) -> Unit,
+    onSauceDelete: (SauceEntity) -> Unit,
     onAddOnDelete: (AddOnEntity) -> Unit,
     showChooseScreen: Boolean,
     onShowChooseScreen: (Boolean) -> Unit,
@@ -198,6 +231,20 @@ private fun MenuContent(
                             .size(24.dp)
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete Menu", tint = Color.Red)
+                    }
+                }
+            }
+            items(sauce) { sauceItem ->
+                Box {
+                    StaffSauceCard(item = sauceItem, onClick = { onSauceClick(sauceItem) })
+                    IconButton(
+                        onClick = { onSauceDelete(sauceItem) },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp)
+                            .size(24.dp)
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete Sauce", tint = Color.Red)
                     }
                 }
             }
@@ -268,6 +315,33 @@ fun StaffMenuCard(item: MenuEntity, onClick: (MenuEntity) -> Unit) {
 
 @Composable
 fun StaffAddOnCard(item: AddOnEntity, onClick: (AddOnEntity) -> Unit) {
+    val isAvailable = item.availability
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(230.dp)
+            .then(if (isAvailable) Modifier.clickable { onClick(item) } else Modifier),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFEFEFEF), contentColor = Color.Black)
+    ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp).height(IntrinsicSize.Min), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                if (!isAvailable) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                        Text("*Unavailable", color = Color.Red, fontWeight = FontWeight.SemiBold, fontSize = 10.sp)
+                    }
+                }
+                Column(modifier = Modifier.alpha(if (isAvailable) 1f else 0.3f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(item.name, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+                    Text("RM %.2f".format(item.price))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StaffSauceCard(item: SauceEntity, onClick: (SauceEntity) -> Unit) {
     val isAvailable = item.availability
     Card(
         modifier = Modifier

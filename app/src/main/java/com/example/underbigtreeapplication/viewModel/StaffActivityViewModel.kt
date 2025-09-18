@@ -20,6 +20,7 @@ class StaffActivityViewModel : ViewModel() {
     private val _paymentsWithOrders = MutableLiveData<List<PaymentWithOrders>>(emptyList())
     val paymentsWithOrders: LiveData<List<PaymentWithOrders>> = _paymentsWithOrders
     private val completedOrders = mutableSetOf<String>()
+    private val completedRewards = mutableSetOf<String>()
 
     fun fetchAllPayments() {
         db.collection("Payments")
@@ -100,7 +101,8 @@ class StaffActivityViewModel : ViewModel() {
                                 condition = doc.getString("condition") ?: "Can only redeem one time",
                                 pointsRequired = doc.getLong("pointsRequired")?.toInt() ?: 0,
                                 isRedeemed = doc.getBoolean("isRedeemed") ?: true,
-                                isPaid = doc.getBoolean("isPaid") ?: false
+                                isPaid = doc.getBoolean("isPaid") ?: false,
+                                status = doc.getString("status") ?: "pending"
                             )
                         }
                         onComplete(rewards)
@@ -129,6 +131,40 @@ class StaffActivityViewModel : ViewModel() {
         } ?: emptyList()
     }
 
+    fun updateRewardsToComplete(customerId: String, rewardIds: List<String>) {
+        db.collection("Profiles")
+            .whereEqualTo("customerId", customerId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (!snapshot.isEmpty) {
+                    val profileDocId = snapshot.documents[0].id
+
+                    rewardIds.forEach { rewardId ->
+                        db.collection("Profiles")
+                            .document(profileDocId)
+                            .collection("RedeemedRewards")
+                            .document(rewardId)
+                            .update("status", "completed")
+                            .addOnSuccessListener {
+                                completedRewards.add(rewardId)
+                                _paymentsWithOrders.value = _paymentsWithOrders.value?.map { pw ->
+                                    pw.copy(
+                                        redeemedRewards = pw.redeemedRewards.map { reward ->
+                                            if (reward.id == rewardId) {
+                                                reward.copy(status = "completed")
+                                            } else {
+                                                reward
+                                            }
+                                        }
+                                    )
+                                } ?: emptyList()
+                            }
+                    }
+                }
+            }
+    }
+
+
     fun isOrderCompleted(orderId: String): Boolean {
         val order = _paymentsWithOrders.value
             ?.flatMap { it.orders }
@@ -136,5 +172,14 @@ class StaffActivityViewModel : ViewModel() {
 
         return completedOrders.contains(orderId) ||
                 (order?.orderStatus == "completed" || order?.orderStatus == "received")
+    }
+
+    fun isRewardCompleted(paymentId: String, rewardId: String): Boolean {
+        if (completedRewards.contains(rewardId)) return true
+
+        val payment = _paymentsWithOrders.value?.find { it.payment.paymentId == paymentId }
+        val reward = payment?.redeemedRewards?.find { it.id == rewardId }
+
+        return reward?.status == "completed" || reward?.status == "received"
     }
 }

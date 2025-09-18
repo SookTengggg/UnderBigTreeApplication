@@ -29,6 +29,7 @@ class StaffViewModel(private val repository: MenuRepository) : ViewModel() {
 
     private val menuCollection = db.collection("Menu")
     private val addonCollection = db.collection("AddOn")
+    private val sauceCollection = db.collection("Sauce")
 
     init {
         viewModelScope.launch {
@@ -56,6 +57,15 @@ class StaffViewModel(private val repository: MenuRepository) : ViewModel() {
         }
     }
 
+    suspend fun getSauceById(id: String): SauceEntity? {
+        return try {
+            val snapshot = sauceCollection.document(id).get().await()
+            snapshot.toObject(SauceEntity::class.java)
+        } catch (e: Exception) {
+            Log.e("StaffVM", "Error fetching Sauce by id: $id", e)
+            null
+        }
+    }
 
     fun updateMenu(menu: MenuEntity) {
         menuCollection.document(menu.id)
@@ -69,6 +79,13 @@ class StaffViewModel(private val repository: MenuRepository) : ViewModel() {
             .set(addon)
             .addOnSuccessListener { Log.d("StaffVM", "AddOn updated successfully") }
             .addOnFailureListener { e -> Log.e("StaffVM", "Error updating addon", e) }
+    }
+
+    fun updateSauce(sauce: SauceEntity) {
+        sauceCollection.document(sauce.id)
+            .set(sauce)
+            .addOnSuccessListener { Log.d("StaffVM", "Sauce updated successfully") }
+            .addOnFailureListener { e -> Log.e("StaffVM", "Error updating sauce", e) }
     }
 
     fun addMenu(menu: MenuEntity) {
@@ -92,6 +109,12 @@ class StaffViewModel(private val repository: MenuRepository) : ViewModel() {
     fun updateSauceAvailability(sauceId: String, availability: Boolean) {
         viewModelScope.launch {
             repository.updateSauceAvailability(sauceId, availability)
+        }
+    }
+
+    fun deleteSauce(sauceId: String) {
+        viewModelScope.launch {
+            repository.deleteSauce(sauceId)
         }
     }
     suspend fun getAllAddOnNamesFromFirebase(): List<OptionItem> {

@@ -1,5 +1,6 @@
 package com.example.underbigtreeapplication.ui.staff
 
+import ads_mobile_sdk.pw
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.navigation.NavController
@@ -61,6 +62,7 @@ fun StaffActivityDetailScreen(
     } else {
         StaffActivityDetailContent(
             paymentId = paymentId,
+            customerId = paymentWithOrders.payment.userId,
             orders = paymentWithOrders.orders,
             subtotal = paymentWithOrders.payment.totalPrice,
             redeemedRewards = paymentWithOrders.redeemedRewards,
@@ -73,6 +75,7 @@ fun StaffActivityDetailScreen(
 @Composable
 fun StaffActivityDetailContent(
     paymentId: String,
+    customerId: String,
     orders: List<CartItem>,
     subtotal: Double,
     redeemedRewards: List<RewardItem>,
@@ -80,7 +83,10 @@ fun StaffActivityDetailContent(
     viewModel: StaffActivityViewModel
 ) {
     val scrollState = rememberScrollState()
-    val anyIncomplete = orders.any { !viewModel.isOrderCompleted(it.orderId) }
+
+    val allOrdersCompleted = orders.all { viewModel.isOrderCompleted(it.orderId) }
+    val allRewardsCompleted = redeemedRewards.all { viewModel.isRewardCompleted(paymentId, it.id) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -217,30 +223,44 @@ fun StaffActivityDetailContent(
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Divider(color = Color.LightGray, thickness = 1.dp)
+                Divider(color = Color.LightGray, thickness = 1.dp)
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Subtotal:", fontSize = 16.sp)
-                Text(formatAmount(subtotal), fontSize = 16.sp)
-            }
-
-            if (anyIncomplete) {
-                Button(
-                    onClick = { viewModel.updateOrdersToComplete(orders.map { it.orderId }) },
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Complete")
+                    Text("Subtotal:", fontSize = 16.sp)
+                    Text(formatAmount(subtotal), fontSize = 16.sp)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (!allOrdersCompleted || !allRewardsCompleted) {
+                    Button(
+                        onClick = {
+                            viewModel.updateOrdersToComplete(orders.map { it.orderId })
+
+                            viewModel.updateRewardsToComplete(
+                                customerId = customerId,
+                                rewardIds = redeemedRewards.map { it.id }
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                    ) {
+                        Text("Complete")
+                    }
+                } else {
+                    Text(
+                        text = "All Completed",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
                 }
             }
         }

@@ -148,17 +148,22 @@ fun StaffActivityCard(
     viewModel: StaffActivityViewModel,
     navController: NavController
 ) {
-    val allCompleted = group.orders.all { viewModel.isOrderCompleted(it.orderId) }
+    val allOrdersCompleted = group.orders.all { viewModel.isOrderCompleted(it.orderId) }
+    val allRewardsCompleted = group.redeemedRewards.all {
+        viewModel.isRewardCompleted(group.payment.paymentId, it.id)}
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .clickable{
+            .clickable {
                 navController.navigate("staffActivityDetail/${group.payment.paymentId}")
             },
         elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F2F2), contentColor = Color.Black)
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF2F2F2),
+            contentColor = Color.Black
+        )
     ) {
         Row(
             modifier = Modifier
@@ -189,7 +194,7 @@ fun StaffActivityCard(
                         fontSize = 14.sp,
                         overflow = TextOverflow.Ellipsis
                     )
-                    if(!order.selectedSauces.isNullOrEmpty()){
+                    if (!order.selectedSauces.isNullOrEmpty()) {
                         Text(
                             text = "  - Sauce: ${order.selectedSauces.joinToString { it.name }}",
                             maxLines = 1,
@@ -197,7 +202,7 @@ fun StaffActivityCard(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    if(!order.selectedAddOns.isNullOrEmpty()){
+                    if (!order.selectedAddOns.isNullOrEmpty()) {
                         Text(
                             text = "  - Add-ons: ${order.selectedAddOns.joinToString { it.name }}",
                             maxLines = 1,
@@ -205,7 +210,7 @@ fun StaffActivityCard(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    if(!order.remarks.isNullOrEmpty()){
+                    if (!order.remarks.isNullOrEmpty()) {
                         Text(
                             text = "  - Remarks: ${order.remarks}",
                             maxLines = 1,
@@ -214,19 +219,19 @@ fun StaffActivityCard(
                         )
                     }
                     if (order.takeAway) {
-                        Text(
-                            text = "  - Take Away",
-                            fontSize = 10.sp
-                        )
+                        Text("  - Take Away", fontSize = 10.sp)
                     }
                 }
 
                 group.redeemedRewards.forEach { reward ->
+                    val isCompleted = viewModel.isRewardCompleted(paymentId = group.payment.paymentId, rewardId = reward.id)
+
                     Text(
-                        text = "🎁 ${reward.name}",
+                        text = "🎁 ${reward.name} ",
+                        maxLines = 1,
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF388E3C)
+                        overflow = TextOverflow.Ellipsis,
+                        color = if (isCompleted) Color.Black else Color(0xFF388E3C)
                     )
                 }
             }
@@ -236,13 +241,28 @@ fun StaffActivityCard(
             Column(horizontalAlignment = Alignment.End) {
                 Text(text = "RM ${String.format("%.2f", group.payment.totalPrice)}")
 
-                if (!allCompleted) {
+                if (!allOrdersCompleted || !allRewardsCompleted) {
                     Button(
-                        onClick = { viewModel.updateOrdersToComplete(group.orders.map { it.orderId }) },
+                        onClick = {
+                            viewModel.updateOrdersToComplete(group.orders.map { it.orderId })
+
+                            viewModel.updateRewardsToComplete(
+                                customerId = group.payment.userId,
+                                rewardIds = group.redeemedRewards.map { it.id }
+                            )
+                        },
                         modifier = Modifier.padding(top = 8.dp)
                     ) {
                         Text("Complete")
                     }
+                } else {
+                    Text(
+                        text = "Completed",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
                 }
             }
         }

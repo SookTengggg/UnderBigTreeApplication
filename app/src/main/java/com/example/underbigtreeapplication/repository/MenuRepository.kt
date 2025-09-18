@@ -166,6 +166,19 @@ class MenuRepository (private val db: AppDatabase) {
             Log.e("MenuRepository", "Error updating availability", e)
         }
     }
+    suspend fun deleteSauce(sauceId: String) = withContext(Dispatchers.IO) {
+        try {
+            firestore.collection("Sauce")
+                .document(sauceId)
+                .delete()
+                .await()
+
+            db.sauceDao().deleteSauce(sauceId)
+
+        } catch (e: Exception) {
+            Log.e("MenuRepository", "Error deleting sauce", e)
+        }
+    }
     suspend fun getAllAddOnNames(): List<OptionItem> = withContext(Dispatchers.IO) {
         try {
             val snapshot = firestore.collection("AddOn").get().await()
